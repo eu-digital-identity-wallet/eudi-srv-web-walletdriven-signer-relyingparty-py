@@ -21,8 +21,7 @@ Application Initialization File:
 Handles application setup, configuration, and exception handling.
 """
 
-import os
-import sys
+import os, sys, logging
 from flask import Flask, render_template
 from flask_session import Session
 from flask_cors import CORS
@@ -53,8 +52,10 @@ def page_not_found(e):
     )
 
 def create_app():
-    app = Flask(__name__, instance_relative_config=True)
+    app = Flask(__name__, instance_relative_config=True, static_url_path='/rp/static')
     app.config['SECRET_KEY'] = ConfService.secret_key
+    
+    app.logger.setLevel(logging.INFO)
     
     # Initialize LoginManager
     from flask_login import LoginManager
@@ -90,7 +91,7 @@ def create_app():
     app.config["SESSION_FILE_THRESHOLD"] = 50
     app.config["SESSION_PERMANENT"] = False # Controls whether sessions persist between app restarts.
     app.config['SESSION_USE_SIGNER'] = True # Ensures sessions are cryptographically signed to prevent tampering
-    app.config['SESSION_KEY_PREFIX'] = 'rp-centric-session:'
+    app.config['SESSION_KEY_PREFIX'] = 'wallet-driven-session:'
     app.config['SESSION_COOKIE_NAME'] = "rp-portal-session"
     app.config['SESSION_COOKIE_PATH'] = '/rp'
     
@@ -98,6 +99,6 @@ def create_app():
     Session(app)
 
     # Configure CORS
-    CORS(app, supports_credentials=True, resources={r"/rp/tester/*": {"origins": ConfService.AS}})
+    CORS(app, supports_credentials=True)
     
     return app

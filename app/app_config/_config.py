@@ -28,3 +28,9 @@ class ConfService:
     wallet_url = "wallet_endpoint_url_here"
     
     LOAD_FOLDER = 'app/docs' 
+    
+    db_host = 'localhost'
+    db_port = 3306
+    db_name = "db_name_here"
+    db_user = "db_user_name_here"
+    db_password = "db_password_here"

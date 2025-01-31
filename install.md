@@ -26,7 +26,7 @@ To run the application, follow these simple steps (some of which may have alread
 
 ### Step 1: Clone the Repository
 
-Clone the eudi-srv-web-rpcentric-signer-relyingparty-py repository from GitHub:
+Clone the eudi-srv-web-walletdriven-signer-relyingparty-py repository from GitHub:
 
 ```shell
 git clone git@github.com:eu-digital-identity-wallet/eudi-srv-web-walletdriven-signer-relyingparty-py.git
@@ -81,9 +81,44 @@ Copy \_config.py to config.py and modify the following configuration variables:
 - **service_url**: the base URL of the service
 - **wallet_url**: the URL of the wallet app's endpoint where the signature request is made
 
+### Step 7: Setup the Database:
+
+1. **Create database with {db_name}**
+
+```
+CREATE DATABASE {db_name};
+```
+
+2. **Create a database user**
+
+```
+CREATE USER {user_name}@'localhost' IDENTIFIED BY {user_password};
+GRANT ALL PRIVILEGES ON *.* TO {user_name}@'localhost';
+```
+
+3. **Create required database tables**
+
+```
+use {db_name};
+create table sd (client_id varchar(255), request_object varchar(1024));
+create table sdo (client_id varchar(255), signed_data_object TEXT(153600));
+```
+
+4. **Update config.py**
+
+Add the following parameters to the 'config.py':
+
+```
+db_host = 'localhost'
+db_port = '3306'
+db_name = {db_name}
+db_user = {db_user}
+db_password = {db_password}
+```
+
 ### Step 7: Run the Application
 
-Run the EUDI RP-Centric Relying Party application (on <http://127.0.0.1:5000>)
+Run the EUDI Wallet-Driven Relying Party application (on <http://127.0.0.1:5000>)
 
 ```shell
 flask --app app run

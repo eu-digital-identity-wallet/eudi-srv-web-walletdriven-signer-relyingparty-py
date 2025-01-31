@@ -22,9 +22,11 @@ def placeSignedDocument(client_id):
     
     # Retrieve Signed Document
     if(request.method == 'GET'):
+        app.logger.info("Checking if the signed data is in the DB.")
         signed_doc = db.get_signed_data_object_from_db(client_id)
 
         if(signed_doc is None):
+            app.logger.info("Signed Data Object isn't in the DB.")
             return "None", 200
         return signed_doc, 200
             
@@ -32,12 +34,14 @@ def placeSignedDocument(client_id):
     # Handle POST request
     # Saves the signed document to the database        
     else:
+        app.logger.info("Uploading Signed Data Object.")
         json_data = request.get_json(silent=True)
         documentWithSignature = json_data.get("documentWithSignature")
         if not documentWithSignature:
+            app.logger.info("Signed Document not in the DB.")
             return "Invalid JSON data", 400       
 
         # save to database a request associated to client_id
         db.add_to_signed_data_object_table(client_id, documentWithSignature)
-        
+        app.logger.info("Uploaded Signed Document.")
         return "OK", 200

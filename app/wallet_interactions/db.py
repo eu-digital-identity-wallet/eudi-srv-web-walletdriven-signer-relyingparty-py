@@ -1,22 +1,30 @@
 import pymysql
+from app_config.config import ConfService as cfgserv
+from flask import (
+    current_app as app
+)
+
 
 def get_db_connection():
     try:
         connection = pymysql.connect(
-            host='localhost',
-            port=3306,
-            user='rp',
-            password='rp',
-            database='rp'
+            host=cfgserv.db_host,
+            port=cfgserv.db_port,
+            user=cfgserv.db_user,
+            password=cfgserv.db_password,
+            database=cfgserv.db_name
         )
         return connection
     except pymysql.Error as e:
-        print(f"Error connecting to MariaDB: {e}")
+        app.logger.error(f"Error connecting to MariaDB: {e}")
         return None
 
 def add_to_signer_document_table(client_id, request_object):
     # save to database a request associated to client_id
     connection = get_db_connection()
+    if(connection is None):
+        app.logger.error("impossible to use database.")
+        raise ValueError("Impossible to use database.")
     cursor = connection.cursor()
     cursor.execute(''' INSERT INTO sd VALUES(%s,%s)''',(client_id, request_object))
     connection.commit()

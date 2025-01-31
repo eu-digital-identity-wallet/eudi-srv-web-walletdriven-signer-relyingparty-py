@@ -1,11 +1,8 @@
-import jwt
-from app_config.config import ConfService as cfgserv
-import uuid
-import secrets
-import hashlib
+import jwt, uuid, secrets, hashlib
 import app.wallet_interactions.db as db
+from app_config.config import ConfService as cfgserv
 from flask import (
-    current_app as app, url_for
+    current_app as app
 )
 
 jwt_secret = cfgserv.jwt_secret
@@ -17,8 +14,7 @@ def sd_retrieval_from_authorization_request(document, filename, document_url, ha
     clientId = getClientIdString()
     app.logger.info("Retrieved the client id: "+clientId)
 
-    # "http://127.0.0.1:5001/rp/wallet/sd/upload/"+clientId
-    response_uri = url_for('wallet.placeSignedDocument', client_id=clientId, _external=True)
+    response_uri = cfgserv.service_url+"/wallet/sd/upload/"+clientId
     app.logger.info("Retrieved the response uri: "+response_uri)
     
     # Generate random nonce
@@ -38,7 +34,7 @@ def sd_retrieval_from_authorization_request(document, filename, document_url, ha
     db.add_to_signer_document_table(clientId, request_object)
     app.logger.info("Added the request object to the database.")
     
-    request_uri = url_for('wallet.retrieveSignerDocument', client_id=clientId, _external=True)
+    request_uri = cfgserv.service_url+"/wallet/sd/"+clientId
     app.logger.info("Generated the request uri: "+request_uri)
     
     link_to_wallet_tester = cfgserv.wallet_url+"?request_uri="+request_uri+"&client_id="+clientId

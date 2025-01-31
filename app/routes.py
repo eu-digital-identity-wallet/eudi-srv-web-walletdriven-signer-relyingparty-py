@@ -15,9 +15,9 @@
 # limitations under the License.
 ###############################################################################
 
-import os, base64, qrcode, io, requests, mimetypes, time, json
+import os, base64, qrcode, io, requests, mimetypes, time, json, time
 from flask import (
-    Blueprint, render_template, request, session, send_from_directory, current_app as app, url_for
+    Blueprint, render_template, request, session, send_from_directory, current_app as app
 )
 from flask_login import login_required
 from app_config.config import ConfService as cfgserv
@@ -39,14 +39,16 @@ DIGEST_OIDS = {
     "sha3_512": "2.16.840.1.101.3.4.2.10",
 }
 
+route_url = cfgserv.service_url+"/tester"
+
 @rp.route('/', methods=['GET', 'POST'])
 def main():
-    return render_template('main.html', redirect_url= cfgserv.service_url)
+    return render_template('main.html')
 
 @rp.route('/document/select', methods=['GET'])
 @login_required
 def select_document():
-    return render_template('select_document.html', redirect_url= cfgserv.service_url)
+    return render_template('select_document.html')
 
 def get_signature_format(filename):
     if filename.endswith('.pdf'):
@@ -78,7 +80,7 @@ def check():
 
     hash_algos = [{"name":"SHA256", "oid":"2.16.840.1.101.3.4.2.1"}]
         
-    return render_template('select_options.html', redirect_url=cfgserv.service_url, filename=filename, signature_format=signature_format, digest_algorithms=hash_algos)
+    return render_template('select_options.html', filename=filename, signature_format=signature_format, digest_algorithms=hash_algos)
 
 # Retrieve document with given name
 @rp.route('/document/<path:filename>')
@@ -113,7 +115,7 @@ def sca_signature_flow():
     base64_document = get_base64_document(filename)
     hash_algorithm_oid = form_local["digest_algorithm"]        
 
-    document_url = url_for('RP.serve_docs', filename=filename, _external=True) # cfgserv.service_url+"/document/"+filename
+    document_url = route_url+"/document/"+filename
     app.logger.info(f"Retrieve Document URL: {document_url}")
     
     link_to_wallet_tester, response_uri = wallet_interaction.sd_retrieval_from_authorization_request(
@@ -124,8 +126,7 @@ def sca_signature_flow():
     )    
     app.logger.info(f"Link to Wallet Tester: {link_to_wallet_tester} & Response URI: {response_uri}")
     
-    # cfgserv.service_url+"/document/signed?response_uri="+response_uri
-    retrieve_signed_document_url = url_for('RP.wait_for_signed_document', response_uri=response_uri, _external=True)
+    retrieve_signed_document_url = route_url+"/document/signed?response_uri="+response_uri
     app.logger.info(f"URL where to retrieve signed document: {retrieve_signed_document_url}")
     
     # Render HTML page with QrCode
@@ -141,9 +142,11 @@ def wait_for_signed_document():
     response_uri = request.args.get('response_uri')
     app.logger.info(f"Response URI where to retrieve signed document: {response_uri}")
     
+    timeout = time.time() + 60*2 # 2 minutes
+    
     signed_document = None
-    found = False    
-    while(not found):
+    found = False 
+    while not found and time.time() < timeout:
         response = requests.get(response_uri)
         if response.status_code == 200 and response.text != "None":
             found = True

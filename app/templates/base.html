@@ -71,52 +71,63 @@
   </head>
 
   <body id="responsive-main-nav1">
-    <div class="main container-fluid">
-      <header role="banner" class="main-header">
-        <div class="container">
-          <div class="row">
-            <nav
-              class="navbar navbar-expand-lg navbar-light"
-              style="padding-left: 60px; padding-right: 60px"
-            >
-              <div class="col-md-9">
-                <img src="{{ url_for('static', filename='ic-logo.svg') }}" />
-              </div>
+    <div class="main">
+      <header role="banner" class="main-header shadow-sm">
+        <nav class="navbar navbar-expand-lg navbar-light">
+          <div class="container-fluid" id="header-container">
+            <div>
+              <a class="navbar-brand col-md-9" href="#">
+                <img
+                  src="{{ url_for('static', filename='ic-logo.svg') }}"
+                  alt="Logo"
+                  height="45"
+                />
+              </a>
+            </div>
 
-              <div class="col-md-3">
-                <div
-                  class="collapse navbar-collapse"
-                  id="navbarSupportedContent"
-                >
-                  <ul class="navbar-nav ml-auto">
-                    {% if current_user.is_authenticated %}
-                    <li class="nav-item">
-                      <a
-                        class="nav-link btn"
-                        href="{{ url_for('auth.account') }}"
-                        >Home</a
-                      >
-                    </li>
-                    <li class="nav-item">
-                      <a
-                        class="nav-link btn"
-                        href="{{ url_for('auth.logout') }}"
-                        >Logout</a
-                      >
-                    </li>
-                    {% else %}
-                    <li class="nav-item">
-                      <a class="nav-link btn" href="{{ url_for('auth.login') }}"
-                        >Login</a
-                      >
-                    </li>
-                    {% endif %}
-                  </ul>
-                </div>
-              </div>
-            </nav>
+            <!-- Navbar Toggle (for mobile) -->
+            <button
+              class="navbar-toggler"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#navbarNav"
+            >
+              <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div
+              class="collapse navbar-collapse justify-content-end"
+              id="navbarNav"
+            >
+              <ul class="navbar-nav ml-auto">
+                {% if current_user.is_authenticated %}
+                <li class="nav-item">
+                  <a
+                    class="nav-link btn btn-primary px-3"
+                    href="{{ url_for('auth.account') }}"
+                    >Home</a
+                  >
+                </li>
+                <li class="nav-item">
+                  <a
+                    class="nav-link btn btn-primary px-3"
+                    href="{{ url_for('auth.logout') }}"
+                    >Logout</a
+                  >
+                </li>
+                {% else %}
+                <li class="nav-item">
+                  <a
+                    class="nav-link btn btn-primary px-3"
+                    href="{{ url_for('auth.login') }}"
+                    >Login</a
+                  >
+                </li>
+                {% endif %}
+              </ul>
+            </div>
           </div>
-        </div>
+        </nav>
       </header>
 
       <div role="main" class="container">

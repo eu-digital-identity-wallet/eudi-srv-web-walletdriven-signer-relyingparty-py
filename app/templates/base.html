@@ -67,6 +67,12 @@
       media="all"
       type="text/css"
     />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+      rel="stylesheet"
+    />
     <title>rQES Relying Party</title>
   </head>
 
@@ -131,42 +137,45 @@
       </header>
 
       <div role="main" class="container">
-        <div class="content height-div-parent">
-          {% block content %} {% endblock %}
-        </div>
+        {% block content %} {% endblock %}
       </div>
 
-      <footer id="footer-main">
-        <div class="row footer-row">
-          <div class="col-md-3 footer-image">
-            <div class="footer-column">
+      <footer id="main-footer">
+        <div class="container-fluid">
+          <div class="row text-center text-md-start align-items-center">
+            <div
+              class="col-12 col-md-3 mb-3 mb-md-0 text-md-start col-md-3 footer-column"
+            >
               <a
                 href="https://ec.europa.eu/digital-building-blocks/sites/display/EUDIGITALIDENTITYWALLET/EU+Digital+Identity+Wallet+Home"
                 target="_blank"
                 ><img
-                  src="{{ url_for('static', filename='images/logo.svg') }}"
-                  alt="Image 1"
+                  src="{{ url_for('static', filename='images/ic-logo.svg') }}"
+                  alt="Logo"
+                  height="45"
               /></a>
-              <small class="mt-2">2025.01.14-Demo (release 0.1.0)</small>
+              <small class="d-block mt-2"
+                >2025.01.14-Demo (release 0.2.0)</small
+              >
             </div>
-          </div>
-          <div class="col-md-3 footer-column-box">
-            <div class="footer-column">
+            <div class="col-12 col-md-3 mb-2 mb-md-0 footer-column">
               <a
+                class="d-block footer-column-a"
                 href="https://ec.europa.eu/digital-building-blocks/sites/display/EUDIGITALIDENTITYWALLET/EU+Digital+Identity+Wallet+Home"
                 target="_blank"
                 >About Us</a
               >
             </div>
-          </div>
-          <div class="col-md-3 footer-column-box">
-            <div class="footer-column">
-              <a href="mailto:CNECT-EUDIW-SUPPORT@ec.europa.eu">Contact Us</a>
-            </div>
-          </div>
-          <div class="col-md-3 footer-column-box">
-            <div class="footer-column">
+            <div class="col-12 col-md-3 mb-2 mb-md-0 footer-column">
               <a
+                class="d-block footer-column-a"
+                href="mailto:CNECT-EUDIW-SUPPORT@ec.europa.eu"
+                >Contact Us</a
+              >
+            </div>
+            <div class="col-12 col-md-3 footer-column">
+              <a
+                class="d-block footer-column-a"
                 href="pdf/EU Digital Identity Wallet website_privacy statement.pdf"
                 target="_blank"
                 >Privacy Statement</a

@@ -1,26 +1,23 @@
 {% extends 'base.html' %} {% block content %}
-<div class="row" style="height: 100%">
-  <div class="col-lg-12" style="height: 100%">
-    <div id="content" class="content-box col-md-11">
-      <div class="main-page-box">
-        <h1>Welcome to the Relying Party Tester</h1>
-        <p
-          style="
-            font-size: 15px;
-            font-family: 'Gill Sans', serif;
-            margin-bottom: 30px;
-          "
-        >
-          This is a web application tester for a Relying Party in the
-          environment of the EUDI Wallet rQES.
-        </p>
-        <div class="genericErrors" id="genericErrorsDesc"></div>
-        <form action="{{ url_for('auth.login') }}" method="GET">
-          <!-- Submit button -->
-          <button class="btn custom-btn" type="submit">Login</button>
-        </form>
-      </div>
-    </div>
+<div class="container-fluid h-100">
+  <div class="content-box col-md-11 mx-auto text-center">
+    <h1>Welcome to the Relying Party Tester</h1>
+    <p style="font-size: 15px; margin-bottom: 30px">
+      This is a web application tester for a Relying Party in the environment of
+      the EUDI Wallet rQES.
+    </p>
+    <div class="genericErrors" id="genericErrorsDesc"></div>
+    {% if current_user.is_authenticated %}
+    <form action="{{ url_for('auth.account') }}" method="GET">
+      <!-- Submit button -->
+      <button class="btn custom-btn" type="submit">Home</button>
+    </form>
+    {% else %}
+    <form action="{{ url_for('auth.login') }}" method="GET">
+      <!-- Submit button -->
+      <button class="btn custom-btn" type="submit">Login</button>
+    </form>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

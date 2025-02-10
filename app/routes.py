@@ -17,7 +17,7 @@
 
 import os, base64, qrcode, io, requests, mimetypes, time, json, time
 from flask import (
-    Blueprint, render_template, request, session, send_from_directory, current_app as app
+    Blueprint, render_template, request, session, send_from_directory, current_app as app, Response
 )
 from flask_login import login_required
 from app_config.config import ConfService as cfgserv
@@ -107,14 +107,19 @@ def sca_signature_flow():
     form_local= request.form
     update_session_values(variable_name="form_global", variable_value=form_local)
 
+    return render_template('choose_wallet.html')
+    
+@rp.route("/document/sign/tester", methods=['GET'])
+def sign_with_wallet_tester():
+    form_local = session.get("form_global")
+    
     filename = form_local["filename"]
     if not filename:
         return "Filename is required", 400  # Return an error if filename is None
     app.logger.info(f"Retrieved document to sign: {filename}")
-
+    
     base64_document = get_base64_document(filename)
-    hash_algorithm_oid = form_local["digest_algorithm"]        
-
+    hash_algorithm_oid = form_local["digest_algorithm"]  
     document_url = route_url+"/document/"+filename
     app.logger.info(f"Retrieve Document URL: {document_url}")
     
@@ -122,7 +127,46 @@ def sca_signature_flow():
         document=base64_document,
         filename=filename,
         document_url=document_url,
-        hashAlgorithmOID=hash_algorithm_oid
+        hashAlgorithmOID=hash_algorithm_oid,
+        response_type="sign_response",
+        wallet_url=cfgserv.wallet_url
+    )    
+    app.logger.info(f"Link to Wallet Tester: {link_to_wallet_tester} & Response URI: {response_uri}")
+    
+    retrieve_signed_document_url = route_url+"/document/signed?response_uri="+response_uri
+    app.logger.info(f"URL where to retrieve signed document: {retrieve_signed_document_url}")
+    
+    # Render HTML page with QrCode
+    qr_img = qrcode.make(link_to_wallet_tester)
+    buffer = io.BytesIO()
+    qr_img.save(buffer, format='PNG')
+    buffer.seek(0)
+    qr_img_base64 = "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode("utf-8")
+    return render_template('redirect_wallet.html', url=link_to_wallet_tester, qrcode=qr_img_base64, retrieve_signed_document_url=retrieve_signed_document_url)
+
+@rp.route("/document/sign/wallet", methods=['GET'])
+def sign_with_wallet():
+    form_local = session.get("form_global")
+    
+    filename = form_local["filename"]
+    if not filename:
+        return "Filename is required", 400  # Return an error if filename is None
+    app.logger.info(f"Retrieved document to sign: {filename}")
+    
+    base64_document = get_base64_document(filename)
+    hash_algorithm_oid = form_local["digest_algorithm"]  
+    document_url = route_url+"/document/"+filename
+    app.logger.info(f"Retrieve Document URL: {document_url}")
+    
+    wallet_url = "mdoc-openid4vp://" + cfgserv.service_url;
+    
+    link_to_wallet_tester, response_uri = wallet_interaction.sd_retrieval_from_authorization_request(
+        document=base64_document,
+        filename=filename,
+        document_url=document_url,
+        hashAlgorithmOID=hash_algorithm_oid,
+        response_type="sign_response",
+        wallet_url=wallet_url
     )    
     app.logger.info(f"Link to Wallet Tester: {link_to_wallet_tester} & Response URI: {response_uri}")
     
@@ -158,22 +202,24 @@ def wait_for_signed_document():
             app.logger.info("Waiting for signed document...")
             time.sleep(15) # waits 15 seconds before trying again
     
-    form_local = session["form_global"]
+    if not found:
+        return Response("Relying Party Tester timed out while waiting for the signed document from the Wallet.", status=408)
+        
+    else:
+        form_local = session["form_global"]
+        filename = form_local["filename"]
+        if not filename:
+            return "Filename is required", 400 # Return an error if filename is None
+        app.logger.info(f"Retrieved document to sign: {filename}")
 
-    filename = form_local["filename"]
-    if not filename:
-        return "Filename is required", 400 # Return an error if filename is None
-    app.logger.info(f"Retrieved document to sign: {filename}")
-          
-    new_name = add_suffix_to_filename(os.path.basename(filename))
-    mime_type, _ = mimetypes.guess_type(filename)
-    
-    return json.dumps({
-        'document_signed_value': signed_document,
-        'document_content_type': mime_type,
-        'document_filename': new_name  
-        })
-    
+        new_name = add_suffix_to_filename(os.path.basename(filename))
+        mime_type, _ = mimetypes.guess_type(filename)
+
+        return json.dumps({
+            'document_signed_value': signed_document,
+            'document_content_type': mime_type,
+            'document_filename': new_name  
+            })
 
 def add_suffix_to_filename(filename, suffix="_signed"):
     name, ext = os.path.splitext(filename)

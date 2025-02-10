@@ -9,7 +9,7 @@ jwt_secret = cfgserv.jwt_secret
 jwt_algorithm = cfgserv.jwt_algorithm
 
 # RP generates a Request similar to Authorization Request from [OpenID4VP]
-def sd_retrieval_from_authorization_request(document, filename, document_url, hashAlgorithmOID):
+def sd_retrieval_from_authorization_request(document, filename, document_url, hashAlgorithmOID, response_type, wallet_url):
     # Obtain the Client Id
     clientId = getClientIdString()
     app.logger.info("Retrieved the client id: "+clientId)
@@ -28,7 +28,7 @@ def sd_retrieval_from_authorization_request(document, filename, document_url, ha
     documentLocations = getDocumentLocation(document_url)
     
     # generate Request Object
-    request_object = generateRequestObject(clientId, response_uri, nonce, documentDigests, documentLocations, hashAlgorithmOID)
+    request_object = generateRequestObject(response_type, clientId, response_uri, nonce, documentDigests, documentLocations, hashAlgorithmOID)
     app.logger.info("Generated the request object: "+request_object)
     
     db.add_to_signer_document_table(clientId, request_object)
@@ -37,7 +37,7 @@ def sd_retrieval_from_authorization_request(document, filename, document_url, ha
     request_uri = cfgserv.service_url+"/wallet/sd/"+clientId
     app.logger.info("Generated the request uri: "+request_uri)
     
-    link_to_wallet_tester = cfgserv.wallet_url+"?request_uri="+request_uri+"&client_id="+clientId
+    link_to_wallet_tester = wallet_url+"?request_uri="+request_uri+"&client_id="+clientId
     app.logger.info("Generated the link to wallet tester: "+link_to_wallet_tester)
 
     return link_to_wallet_tester, response_uri
@@ -48,9 +48,9 @@ def getClientIdString():
     client_id_string = str(client_id)
     return client_id_string
 
-def generateRequestObject(client_id, response_uri, nonce, documentDigests, documentLocations, hashAlgorithmOID):    
+def generateRequestObject(response_type, client_id, response_uri, nonce, documentDigests, documentLocations, hashAlgorithmOID):    
     payload = {
-        "response_type": "",
+        "response_type": response_type,
         "client_id": client_id,
         "response_mode": "direct_post",
         "response_uri": response_uri,
@@ -63,6 +63,23 @@ def generateRequestObject(client_id, response_uri, nonce, documentDigests, docum
     token = jwt.encode(payload, jwt_secret, jwt_algorithm)
     
     return token
+
+def generateRequestObject(response_type, client_id, response_uri, nonce, documentDigests, documentLocations, hashAlgorithmOID):    
+    payload = {
+        "response_type": response_type,
+        "client_id": client_id,
+        "response_mode": "direct_post",
+        "response_uri": response_uri,
+        "nonce": nonce,
+        "signatureQualifier": "eu_eidas_qes",
+        "documentDigests": documentDigests,
+        "documentLocations": documentLocations,
+        "hashAlgorithmOID": hashAlgorithmOID
+    }
+    token = jwt.encode(payload, jwt_secret, jwt_algorithm)
+    
+    return token
+
 
 def getDocumentDigest(document, filename, hash_algorithm_oid):
     if isinstance(document, str):

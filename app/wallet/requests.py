@@ -1,5 +1,5 @@
 import jwt, uuid, secrets, hashlib
-import app.wallet_interactions.db as db
+import app.wallet.db as db
 from app_config.config import ConfService as cfgserv
 from flask import (
     current_app as app
@@ -60,24 +60,8 @@ def generateRequestObject(response_type, client_id, response_uri, nonce, documen
         "documentLocations": documentLocations,
         "hashAlgorithmOID": hashAlgorithmOID
     }
-    token = jwt.encode(payload, jwt_secret, jwt_algorithm)
     
-    return token
-
-def generateRequestObject(response_type, client_id, response_uri, nonce, documentDigests, documentLocations, hashAlgorithmOID):    
-    payload = {
-        "response_type": response_type,
-        "client_id": client_id,
-        "response_mode": "direct_post",
-        "response_uri": response_uri,
-        "nonce": nonce,
-        "signatureQualifier": "eu_eidas_qes",
-        "documentDigests": documentDigests,
-        "documentLocations": documentLocations,
-        "hashAlgorithmOID": hashAlgorithmOID
-    }
     token = jwt.encode(payload, jwt_secret, jwt_algorithm)
-    
     return token
 
 

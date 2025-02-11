@@ -83,7 +83,7 @@ def create_app():
     import authentication.routes as authentication_routes
     app.register_blueprint(authentication_routes.auth)
 
-    import wallet_interactions.routes as wallet_interaction_routes
+    import wallet.routes as wallet_interaction_routes
     app.register_blueprint(wallet_interaction_routes.wallet)
 
     # Configure session    

@@ -3,7 +3,7 @@ from flask import (
     Blueprint, request, current_app as app
 )
 from app_config.config import ConfService as cfgserv
-import app.wallet_interactions.db as db
+import app.wallet.db as db
 
 
 wallet = Blueprint("wallet", __name__, url_prefix="/rp/wallet")

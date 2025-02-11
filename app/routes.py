@@ -21,7 +21,7 @@ from flask import (
 )
 from flask_login import login_required
 from app_config.config import ConfService as cfgserv
-import app.wallet_interactions.requests as wallet_interaction
+import app.wallet.requests as wallet_interaction
 
 rp = Blueprint("RP", __name__, url_prefix="/rp/tester")
 rp.template_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'template/')

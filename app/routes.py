@@ -26,19 +26,6 @@ import app.wallet.requests as wallet_interaction
 rp = Blueprint("RP", __name__, url_prefix="/rp/tester")
 rp.template_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'template/')
 
-DIGEST_OIDS = {
-    "md5": "1.2.840.113549.2.5",
-    "sha1": "1.3.14.3.2.26",
-    "sha224": "2.16.840.1.101.3.4.2.4",
-    "sha256": "2.16.840.1.101.3.4.2.1",
-    "sha384": "2.16.840.1.101.3.4.2.2",
-    "sha512": "2.16.840.1.101.3.4.2.3",
-    "sha3_224": "2.16.840.1.101.3.4.2.7",
-    "sha3_256": "2.16.840.1.101.3.4.2.8",
-    "sha3_384": "2.16.840.1.101.3.4.2.9",
-    "sha3_512": "2.16.840.1.101.3.4.2.10",
-}
-
 route_url = cfgserv.service_url+"/tester"
 
 @rp.route('/', methods=['GET', 'POST'])
@@ -74,9 +61,12 @@ def check():
     elif document_type == 'xml':
         filename = 'sample.xml'
     else:
-        return "Invalid document type selected."    
+        app.logger.error("The document type selected is not supported.")
+        return render_template('500.html', error="The type of the document selected is not supported.")
+    app.logger.info("Sucessfully retrieved the filename.")
     
     signature_format = get_signature_format(filename)
+    app.logger.info("Successfully retrieved the signature format: "+signature_format)
 
     hash_algos = [{"name":"SHA256", "oid":"2.16.840.1.101.3.4.2.1"}]
         
@@ -103,62 +93,31 @@ def get_base64_document(filename):
     return base64_document
 
 @rp.route("/document/sign", methods=['POST'])
+@login_required
 def sca_signature_flow():
     form_local= request.form
     update_session_values(variable_name="form_global", variable_value=form_local)
-
+    app.logger.info("Sucessfully saved the options choosen.")
     return render_template('choose_wallet.html')
     
-@rp.route("/document/sign/tester", methods=['GET'])
-def sign_with_wallet_tester():
+def start_wallet_interaction(wallet_url):
     form_local = session.get("form_global")
+    if form_local is None:
+        app.logger.error("The Signature Options Form is missing.")
+        render_template("500.html", error="The signature settings are missing.")
     
     filename = form_local["filename"]
-    if not filename:
-        return "Filename is required", 400  # Return an error if filename is None
+    if filename is None:
+        app.logger.error("The filename is missing.")
+        render_template("500.html", error="Filename is missing.")
     app.logger.info(f"Retrieved document to sign: {filename}")
     
     base64_document = get_base64_document(filename)
-    hash_algorithm_oid = form_local["digest_algorithm"]  
+    hash_algorithm_oid = form_local["digest_algorithm"]
+    app.logger.info("Hash Algorithm: "+hash_algorithm_oid)   
+      
     document_url = route_url+"/document/"+filename
     app.logger.info(f"Retrieve Document URL: {document_url}")
-    
-    link_to_wallet_tester, response_uri = wallet_interaction.sd_retrieval_from_authorization_request(
-        document=base64_document,
-        filename=filename,
-        document_url=document_url,
-        hashAlgorithmOID=hash_algorithm_oid,
-        response_type="sign_response",
-        wallet_url=cfgserv.wallet_url
-    )    
-    app.logger.info(f"Link to Wallet Tester: {link_to_wallet_tester} & Response URI: {response_uri}")
-    
-    retrieve_signed_document_url = route_url+"/document/signed?response_uri="+response_uri
-    app.logger.info(f"URL where to retrieve signed document: {retrieve_signed_document_url}")
-    
-    # Render HTML page with QrCode
-    qr_img = qrcode.make(link_to_wallet_tester)
-    buffer = io.BytesIO()
-    qr_img.save(buffer, format='PNG')
-    buffer.seek(0)
-    qr_img_base64 = "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode("utf-8")
-    return render_template('redirect_wallet.html', url=link_to_wallet_tester, qrcode=qr_img_base64, retrieve_signed_document_url=retrieve_signed_document_url)
-
-@rp.route("/document/sign/wallet", methods=['GET'])
-def sign_with_wallet():
-    form_local = session.get("form_global")
-    
-    filename = form_local["filename"]
-    if not filename:
-        return "Filename is required", 400  # Return an error if filename is None
-    app.logger.info(f"Retrieved document to sign: {filename}")
-    
-    base64_document = get_base64_document(filename)
-    hash_algorithm_oid = form_local["digest_algorithm"]  
-    document_url = route_url+"/document/"+filename
-    app.logger.info(f"Retrieve Document URL: {document_url}")
-    
-    wallet_url = "mdoc-openid4vp://" + cfgserv.service_url;
     
     link_to_wallet_tester, response_uri = wallet_interaction.sd_retrieval_from_authorization_request(
         document=base64_document,
@@ -181,6 +140,17 @@ def sign_with_wallet():
     qr_img_base64 = "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode("utf-8")
     return render_template('redirect_wallet.html', url=link_to_wallet_tester, qrcode=qr_img_base64, retrieve_signed_document_url=retrieve_signed_document_url)
 
+@rp.route("/document/sign/tester", methods=['GET'])
+@login_required
+def sign_with_wallet_tester():
+    wallet_url = cfgserv.wallet_url
+    return start_wallet_interaction(wallet_url)
+
+@rp.route("/document/sign/wallet", methods=['GET'])
+def sign_with_wallet(): 
+    wallet_url = "mdoc-openid4vp://" + cfgserv.service_url
+    return start_wallet_interaction(wallet_url)
+    
 @rp.route("/document/signed", methods=['GET'])
 def wait_for_signed_document():
     response_uri = request.args.get('response_uri')
@@ -206,7 +176,7 @@ def wait_for_signed_document():
         return Response("Relying Party Tester timed out while waiting for the signed document from the Wallet.", status=408)
         
     else:
-        form_local = session["form_global"]
+        form_local = session.get("form_global")
         filename = form_local["filename"]
         if not filename:
             return "Filename is required", 400 # Return an error if filename is None
@@ -229,3 +199,7 @@ def update_session_values(variable_name, variable_value):
     if(session.get(variable_name) is not None):
         session.pop(variable_name)
     session[variable_name] = variable_value
+
+def remove_session_values(variable_name):
+    if(session.get(variable_name) is not None):
+        session.pop(variable_name)

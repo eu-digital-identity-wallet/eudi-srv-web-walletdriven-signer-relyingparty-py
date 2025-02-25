@@ -79,9 +79,9 @@
       // Get the response text (HTML)
       const signed_document_data = await response.json();
 
-      document_signed_value = signed_document_data["document_signed_value"];
-      document_content_type = signed_document_data["document_content_type"];
-      document_filename = signed_document_data["document_filename"];
+      document_signed_value = signed_document_data[0]["document_signed_value"];
+      document_content_type = signed_document_data[0]["document_content_type"];
+      document_filename = signed_document_data[0]["document_filename"];
 
       document.getElementById("signed_document").hidden = false;
       loadDocumentViewer();

@@ -25,13 +25,13 @@ import os, sys, logging
 from flask import Flask, render_template
 from flask_session import Session
 from flask_cors import CORS
-from app.app_config.config import ConfService
-
+from app.app_config.config import ConfigClass
+from app.model import keys as keys_service
 
 # Extend system path to include the current directory
 sys.path.append(os.path.dirname(__file__))
 
-def handle_exception(e):
+def handle_exception():
     return (
         render_template(
             "500.html",
@@ -52,8 +52,18 @@ def page_not_found(e):
     )
 
 def create_app():
+    required_certificate = os.path.join(os.getcwd(), ConfigClass.jwt_certificate_path)
+    required_key = os.path.join(os.getcwd(), ConfigClass.jwt_private_key_path)
+    required_certificate_ca = os.path.join(os.getcwd(), ConfigClass.jwt_ca_certificate_path)
+    if not os.path.exists(required_certificate):
+        raise FileNotFoundError(f"Critical Error: Required file not found at '{required_certificate}'")
+    if not os.path.exists(required_key):
+        raise FileNotFoundError(f"Critical Error: Required file not found at '{required_key}'")
+    if not os.path.exists(required_certificate_ca):
+        raise FileNotFoundError(f"Critical Error: Required file not found at '{required_certificate_ca}'")
+
     app = Flask(__name__, instance_relative_config=True, static_url_path='/rp/static')
-    app.config['SECRET_KEY'] = ConfService.secret_key
+    app.config['SECRET_KEY'] = ConfigClass.secret_key
     
     app.logger.setLevel(logging.INFO)
     
@@ -77,13 +87,13 @@ def create_app():
     from . import (routes)
     app.register_blueprint(routes.rp)
     
-    import main.routes as main_routes
+    import model.main.routes as main_routes
     app.register_blueprint(main_routes.base)
 
-    import authentication.routes as authentication_routes
+    import model.authentication.routes as authentication_routes
     app.register_blueprint(authentication_routes.auth)
 
-    import wallet.routes as wallet_interaction_routes
+    import model.wallet.routes as wallet_interaction_routes
     app.register_blueprint(wallet_interaction_routes.wallet)
 
     # Configure session    
@@ -100,5 +110,5 @@ def create_app():
 
     # Configure CORS
     CORS(app, supports_credentials=True)
-    
+
     return app

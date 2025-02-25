@@ -14,13 +14,13 @@ def login():
         username = request.form['username']
         password = request.form['password']
         user = UserService.login(username, password)
-        if(user is not None):
+        if user is not None:
             login_user(user)
             return redirect(url_for('auth.account'))
         else:
             flash('Login failed! Please check your username and password.')
     users = UserService.get_users()
-    return render_template('login.html', rp_users = users)
+    return render_template('login-page.html', rp_users = users)
 
 @auth.route('/logout')
 @login_required
@@ -31,4 +31,4 @@ def logout():
 @auth.route('/account', methods=['GET'])
 @login_required
 def account():
-    return render_template('account.html')
+    return render_template('account-page.html')

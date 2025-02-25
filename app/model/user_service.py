@@ -1,4 +1,3 @@
-
 from model.user import User
 
 # Mock database
@@ -15,7 +14,6 @@ users = [
 
 
 class UserService:
-
     # returns the user logged in if successful
     @staticmethod
     def login(username, password):        
@@ -25,8 +23,7 @@ class UserService:
                 return user
         else:
             return None
-    
-    
+
     @staticmethod
     def get_users():
         return users

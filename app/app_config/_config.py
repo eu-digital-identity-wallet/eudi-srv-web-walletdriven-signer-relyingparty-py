@@ -19,12 +19,17 @@
 This config.py contains configuration data.
 """
 
-class ConfService:
+class ConfigClass:
     secret_key = "secret_here"
-    jwt_secret = "jwt_secret_here"
-    jwt_algorithm = "jwt_algorithm_here"
+
+    jwt_private_key_path = "jwt private key path here"
+    jwt_private_key_passphrase = "jwt private key passphrase here"
+    jwt_certificate_path = "jwt certificate path here"
+    jwt_ca_certificate_path = "jwt CA certificate path here"
+    jwt_algorithm = "jwt algorithm here"
     
     service_url = "rp_web_page_here"
+    service_domain = "rp_domain_here"
     wallet_url = "wallet_endpoint_url_here"
     
     LOAD_FOLDER = 'app/docs' 

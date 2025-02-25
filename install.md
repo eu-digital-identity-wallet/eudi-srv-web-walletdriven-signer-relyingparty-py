@@ -81,7 +81,7 @@ Copy \_config.py to config.py and modify the following configuration variables:
 - **service_url**: the base URL of the service
 - **wallet_url**: the URL of the wallet app's endpoint where the signature request is made
 
-### Step 7: Setup the Database:
+### Step 7: Set up the Database:
 
 1. **Create database with {db_name}**
 
@@ -116,7 +116,14 @@ db_user = {db_user}
 db_password = {db_password}
 ```
 
-### Step 7: Run the Application
+### Step 8: Create a Key Pair and a Certificate
+
+```shell
+openssl genpkey -genparam -algorithm ec -pkeyopt ec_paramgen_curve:P-256 -out ECPARAM.pem
+openssl req -newkey ec:ECPARAM.pem -keyout PRIVATEKEY.key -out MYCSR.csr -config csr.conf
+```
+
+### Step 8: Run the Application
 
 Run the EUDI Wallet-Driven Relying Party application (on <http://127.0.0.1:5000>)
 

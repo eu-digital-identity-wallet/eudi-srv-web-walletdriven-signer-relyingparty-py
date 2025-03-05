@@ -4,20 +4,26 @@
     <h1>Sign Document</h1>
     <h2>Sign with Wallet</h2>
     <br />
-    <div class="col-md-12" style="align-items: center">
-      <img
-        src="{{ qrcode }}"
-        alt="EUDI Wallet"
-        style="width: 200px; height: 200px"
-      />
+    <div id="redirect-wallet">
+      <div class="col-md-12" style="align-items: center">
+        <img
+          src="{{ qrcode }}"
+          alt="EUDI Wallet"
+          style="width: 200px; height: 200px"
+        />
+      </div>
+      <div class="btn custom-btn">
+        <a
+          href="{{ url }}"
+          target="_blank"
+          style="color: white; text-decoration: none"
+          >Go to EUDI Wallet</a
+        >
+      </div>
     </div>
-    <div class="btn custom-btn">
-      <a
-        href="{{ url }}"
-        target="_blank"
-        style="color: white; text-decoration: none"
-        >Go to EUDI Wallet</a
-      >
+
+    <div id="loading-message" class="alert alert-info" style="margin-top: 20px">
+      Waiting for the signed document...
     </div>
 
     <div
@@ -26,94 +32,111 @@
       style="display: none; margin-top: 20px"
     ></div>
 
-    <div id="signed_document" class="main-page-box" style="margin-top: 50px">
-      <h2>Signed Document</h2>
-      <!-- Preview the file -->
-      <iframe
-        id="viewer"
-        frameborder="0"
-        scrolling="auto"
-        height="500px"
-        width="100%"
-        type="application/pdf"
-      ></iframe>
-
-      <div class="download-container">
-        <button
-          class="sign-custom-btn"
-          id="download_button"
-          onclick="downloadPDF()"
-        >
-          Download
-        </button>
-
-        <a class="sign-custom-btn" href="{{ url_for('auth.account') }}"
-          >Close</a
-        >
-      </div>
+    <div
+      id="signed-document-container"
+      class="main-page-box"
+      style="display: none"
+    >
+      <h2>Signed Documents</h2>
+      <div id="signed-documents"></div>
     </div>
+
+    <a class="sign-custom-btn" href="{{ url_for('auth.account') }}">Close</a>
   </div>
 </div>
 
 <script>
-  document.getElementById("signed_document").hidden = true;
-
-  // Define the URL for the GET request
   const requestUrl = "{{ retrieve_signed_document_url }}";
-  console.log(requestUrl);
+  console.log("Polling URL: ", requestUrl);
 
-  // Function to send the HTTP GET request
-  async function fetchAndUpdatePage() {
-    try {
-      const response = await fetch(requestUrl);
+  function fetchAndUpdatePage() {
+    fetch(requestUrl)
+      .then((response) => {
+        if (response.status === 408) {
+          throw new Error(
+            "Failed to retrieve signed document. Relying Party Tester timed out. Please try again."
+          );
+        }
+        if (!response.ok) {
+          console.error("Error fetching the page:", error);
+          throw new Error("Failed to fetch the signed document.");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log("Data received: ", data);
+        if (data.length > 0) {
+          document.getElementById("redirect-wallet").style.display = "none";
+          document.getElementById("loading-message").style.display = "none";
+          document.getElementById("signed-document-container").style.display =
+            "block";
 
-      if (response.status === 408) {
-        throw new Error(
-          "Failed to retrieve signed document. Relying Party Tester timed out. Please try again."
-        );
-      }
-      if (!response.ok) {
-        throw new Error("Failed to fetch the signed document.");
-      }
+          const docContainer = document.getElementById("signed-documents");
+          docContainer.innerHTML = "";
 
-      // Get the response text (HTML)
-      const signed_document_data = await response.json();
+          data.forEach((doc) => {
+            const {
+              document_signed_value,
+              document_content_type,
+              document_filename,
+            } = doc;
 
-      document_signed_value = signed_document_data[0]["document_signed_value"];
-      document_content_type = signed_document_data[0]["document_content_type"];
-      document_filename = signed_document_data[0]["document_filename"];
+            console.log(document_signed_value);
+            console.log(document_content_type);
+            console.log(document_filename);
 
-      document.getElementById("signed_document").hidden = false;
-      loadDocumentViewer();
-    } catch (error) {
-      console.error("Error fetching the page:", error);
+            let previewHTML = "";
 
-      // Show error message to user
-      const errorMessageDiv = document.getElementById("error-message");
-      errorMessageDiv.innerText = error.message;
-      errorMessageDiv.style.display = "block";
-    }
+            if (
+              [
+                "text/plain",
+                "application/json",
+                "application/xml",
+                "application/pdf",
+              ].includes(document_content_type)
+            ) {
+              previewHTML = `<iframe frameborder="0" scrolling="auto" height="500px" width="100%" src="data:${document_content_type};base64,${document_signed_value}"></iframe>`;
+            } else if (
+              [
+                "application/vnd.etsi.asic-s+zip",
+                "application/vnd.etsi.asic-e+zip",
+              ].includes(document_content_type)
+            ) {
+              previewHTML = `<br /><em>ZIP files cannot be previewed. Please download.</em>`;
+            }
+
+            docContainer.innerHTML += `
+              <div>
+                ${previewHTML}
+                <button class="sign-custom-btn" onclick="downloadDocument('${document_signed_value}', '${document_content_type}', '${document_filename}')">
+                  Download
+                </button>
+                <br/><br/>
+              </div>
+            `;
+          });
+        }
+      })
+      .catch((error) => {
+        // Show error message to user
+        const errorMessageDiv = document.getElementById("error-message");
+        errorMessageDiv.innerText = error.message;
+        errorMessageDiv.style.display = "block";
+      });
   }
 
-  // Call the function when the page has loaded
   window.onload = fetchAndUpdatePage;
 
-  let document_signed_value;
-  let document_content_type;
-  let document_filename;
-
-  function downloadPDF(pdf) {
+  function downloadDocument(
+    document_signed_value,
+    document_content_type,
+    document_filename
+  ) {
     const linkSource = `data:${document_content_type};base64,${document_signed_value}`;
     const downloadLink = document.createElement("a");
     downloadLink.href = linkSource;
     downloadLink.download = document_filename;
     downloadLink.click();
-  }
-
-  function loadDocumentViewer() {
-    // Create a Blob object from the byte array
-    const linkSource = `data:${document_content_type};base64,${document_signed_value}`;
-    document.getElementById("viewer").src = linkSource;
   }
 </script>
 

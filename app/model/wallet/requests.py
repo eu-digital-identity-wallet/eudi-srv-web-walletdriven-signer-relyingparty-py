@@ -9,7 +9,7 @@ from model import keys as keys_service
 jwt_algorithm = Config.jwt_algorithm
 
 # RP generates a Request similar to Authorization Request from [OpenID4VP]
-def sd_retrieval_from_authorization_request(document, filename, document_url, hash_algorithm_oid, response_type, wallet_url):
+def sd_retrieval_from_authorization_request(documents_info, documents_url, hash_algorithm_oid, response_type, wallet_url):
     # Obtain the client_id
     client_id, client_id_scheme = get_client_id_and_client_id_scheme()
     app.logger.info("Retrieved the client id: "+client_id)
@@ -23,10 +23,10 @@ def sd_retrieval_from_authorization_request(document, filename, document_url, ha
     app.logger.info("Retrieved the response uri: "+response_uri)
     
     # Get document Digest
-    document_digests = get_document_digest(document, filename, hash_algorithm_oid)
+    document_digests = get_document_digest(documents_info, hash_algorithm_oid)
 
     # Get document Locations
-    document_locations = get_document_location(document_url)
+    document_locations = get_document_location(documents_url)
     
     # generate Request Object
     request_object = generate_request_object(response_type, client_id, client_id_scheme, response_uri, nonce, document_digests, document_locations, hash_algorithm_oid)
@@ -47,31 +47,37 @@ def sd_retrieval_from_authorization_request(document, filename, document_url, ha
 def get_client_id_and_client_id_scheme():
     return "walletcentric.signer.eudiw.dev", "x509_san_dns"
 
-def get_document_digest(document, filename, hash_algorithm_oid):
-    if isinstance(document, str):
-        document = document.encode('utf-8')
+def get_document_digest(documents_info, hash_algorithm_oid):
+    documents_digests = []
 
-    hash_func = hashlib.new("sha256")
-    hash_func.update(document)
+    for doc_info in documents_info:
+        filename = doc_info["filename"]
+        document_base64 = doc_info["document_base64"]
 
-    document_digests = [
-        {
+        if isinstance(document_base64, str):
+            document_base64 = document_base64.encode('utf-8')
+
+        hash_func = hashlib.new("sha256")
+        hash_func.update(document_base64)
+
+        documents_digests.append({
             "hash": hash_func.hexdigest(),
             "label": filename
-        }
-    ]
+        })
 
-    return document_digests
+    return documents_digests
 
-def get_document_location(document_url):
-    document_locations = [
-        {
-            "uri": document_url,
+def get_document_location(documents_url):
+    document_locations = []
+
+    for url in documents_url:
+        document_locations.append({
+            "uri": url,
             "method": {
                 "type": "public"
             }
-        }
-    ]
+        })
+
     return document_locations
 
 def generate_request_object(response_type, client_id, client_id_scheme, response_uri, nonce, document_digests, document_locations, hash_algorithm_oid):

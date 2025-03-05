@@ -1,15 +1,13 @@
 {% extends 'base.html' %} {% block content %}
 <div class="container-fluid h-100">
   <div class="content-box col-md-11 mx-auto text-center">
-    <div class="main-page-box">
-      <h3>EUDI Wallet</h2>
-      <h1>Relying Party Tester</h1>
-      <div class="genericErrors" id="genericErrorsDesc"></div>
+    <h2>EUDI Wallet</h2>
+    <h1>Relying Party Tester</h1>
+    <div class="genericErrors" id="genericErrorsDesc"></div>
   
-      <a class="btn custom-btn" type="submit" href="{{ url_for('RP.select_document') }}">Sign Document</a>
-      <a class="btn custom-btn" type="submit" href="{{ url_for('auth.logout') }}">Logout</a>
+    <a class="btn custom-btn" type="submit" href="{{ url_for('RP.select_document') }}">Sign Document</a>
+    <a class="btn custom-btn" type="submit" href="{{ url_for('auth.logout') }}">Logout</a>
       
-    </div>
   </div>
 </div>
 {% endblock %}

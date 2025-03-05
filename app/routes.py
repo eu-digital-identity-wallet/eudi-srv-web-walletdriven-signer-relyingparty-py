@@ -17,7 +17,7 @@
 
 import os, base64, qrcode, io, mimetypes, json, time
 from flask import (
-    Blueprint, render_template, request, session, send_from_directory, current_app as app, Response
+    Blueprint, render_template, request, session, send_from_directory, current_app as app, Response, jsonify
 )
 from flask_login import login_required
 from app_config.config import ConfigClass as Config
@@ -35,42 +35,43 @@ def main():
 @rp.route('/document/select', methods=['GET'])
 @login_required
 def select_document():
+    remove_session_values(variable_name="form_global")
     return render_template('select-document-page.html')
 
-def get_signature_format(filename):
-    if filename.endswith('.pdf'):
-        return 'PAdES'
-    elif filename.endswith('.xml'):
-        return 'XAdES'
-    elif filename.endswith('.json'):
-        return 'JAdES'
-    else:
-        return 'CAdES'
-
 # Present page with signing options
-@rp.route('/document/options', methods=['GET'])
+@rp.route('/document/options', methods=['POST'])
 @login_required
 def check():
-    document_type = request.args.get('document')
-    if document_type == 'pdf':
-        filename = 'sample.pdf'
-    elif document_type == 'json':
-        filename = 'sample.json'
-    elif document_type == 'txt':
-        filename = 'sample.txt'
-    elif document_type == 'xml':
-        filename = 'sample.xml'
-    else:
+    document_type_chosen = request.form["items"]
+    print(document_type_chosen)
+
+    documents_chosen = []
+    signature_format = []
+    if 'pdf' in document_type_chosen:
+        documents_chosen.append('sample.pdf')
+        signature_format.append('PAdES')
+    if 'json' in document_type_chosen:
+        documents_chosen.append('sample.json')
+        signature_format.append('JAdES')
+    if 'txt' in document_type_chosen:
+        documents_chosen.append('sample.txt')
+        signature_format.append('CAdES')
+    if 'xml' in document_type_chosen:
+        documents_chosen.append('sample.xml')
+        signature_format.append('XAdES')
+    if 'pdf' not in document_type_chosen and 'json' not in document_type_chosen and 'txt' not in document_type_chosen and 'xml' not in document_type_chosen:
         app.logger.error("The document type selected is not supported.")
         return render_template('500.html', error="The type of the document selected is not supported.")
-    app.logger.info("Sucessfully retrieved the filename.")
+    app.logger.info("Successfully retrieved the filename.")
     
-    signature_format = get_signature_format(filename)
-    app.logger.info("Successfully retrieved the signature format: "+signature_format)
+    app.logger.info("Successfully retrieved the signature format.")
 
     hash_algos = [{"name":"SHA256", "oid":"2.16.840.1.101.3.4.2.1"}]
-        
-    return render_template('select-options-page.html', filename=filename, signature_format=signature_format, digest_algorithms=hash_algos)
+
+    list_par = list(zip(documents_chosen, signature_format))
+    print(list_par)
+
+    return render_template('select-options-page.html', list_docs=list_par, digest_algorithms=hash_algos)
 
 # Retrieve document with given name
 @rp.route('/document/<path:filename>', methods=['GET'])
@@ -81,8 +82,23 @@ def serve_docs(filename):
 @login_required
 def sca_signature_flow():
     form_local = request.form
-    update_session_values(variable_name="form_global", variable_value=form_local)
+    print(form_local)
+
+    form_global = session.get("form_global")
+    if form_global is None:
+        form_global = [form_local]
+        update_session_values(variable_name="form_global", variable_value=form_global)
+    else:
+        form_global.append(form_local)
+        update_session_values(variable_name="form_global", variable_value=form_global)
+    print(session.get("form_global"))
+
     app.logger.info("Successfully saved the options chosen.")
+    return Response("Ok", 200)
+
+@rp.route("/document/sign", methods=['GET'])
+@login_required
+def sca_signature_page():
     return render_template('select-wallet-page.html')
 
 def get_base64_document(filename):
@@ -100,28 +116,38 @@ def get_base64_document(filename):
     return base64_document
 
 def start_wallet_interaction(wallet_url):
-    form_local = session.get("form_global")
-    if form_local is None:
+    form_list = session.get("form_global")
+    if form_list is None:
         app.logger.error("The Signature Options Form is missing.")
         render_template("500.html", error="The signature settings are missing.")
+
+    print(len(form_list))
+
+    documents_info = []
+    documents_url = []
+    hash_algorithm_oid = None
+
+    for form in form_list:
+        filename = form["filename"]
+        if filename is None:
+            app.logger.error("The filename is missing.")
+            render_template("500.html", error="Filename is missing.")
+        app.logger.info(f"Retrieved document to sign: {filename}")
     
-    filename = form_local["filename"]
-    if filename is None:
-        app.logger.error("The filename is missing.")
-        render_template("500.html", error="Filename is missing.")
-    app.logger.info(f"Retrieved document to sign: {filename}")
-    
-    base64_document = get_base64_document(filename)
-    hash_algorithm_oid = form_local["digest_algorithm"]
-    app.logger.info("Hash Algorithm: "+hash_algorithm_oid)   
+        base64_document = get_base64_document(filename)
+        documents_info.append({"filename": filename, "document_base64": base64_document})
+
+        hash_algorithm_oid = form["digest_algorithm"]
+        app.logger.info("Hash Algorithm: "+hash_algorithm_oid)
       
-    document_url = route_url+"/document/"+filename
-    app.logger.info(f"Retrieve Document URL: {document_url}")
-    
+        document_url = route_url+"/document/"+filename
+        documents_url.append(document_url)
+        app.logger.info(f"Retrieve Document URL: {document_url}")
+
+
     link_to_wallet_tester, nonce = wallet_interaction.sd_retrieval_from_authorization_request(
-        document=base64_document,
-        filename=filename,
-        document_url=document_url,
+        documents_info = documents_info,
+        documents_url=documents_url,
         hash_algorithm_oid=hash_algorithm_oid,
         response_type="sign_response",
         wallet_url=wallet_url
@@ -155,7 +181,7 @@ def wait_for_signed_document():
     nonce = request.args.get('nonce')
     app.logger.info(f"Response URI where to retrieve signed document: {nonce}")
     
-    timeout = time.time() + 60*10 # 2 minutes
+    timeout = time.time() + 60*10 # 10 minutes
     
     signed_document = None
     found = False 
@@ -168,20 +194,22 @@ def wait_for_signed_document():
             app.logger.info(f"Retrieved signed document.")
         else:
             app.logger.info("Waiting for signed document...")
-            time.sleep(15) # waits 15 seconds before trying again
+            time.sleep(15)
     
     if not found:
+        remove_session_values("form_global")
         return Response("Relying Party Tester timed out while waiting for the signed document from the Wallet.", status=408)
         
     else:
-        form_local = session.get("form_global")
-        filename = form_local["filename"]
-        if not filename:
-            return "Filename is required", 400  # Return an error if filename is None
-        app.logger.info(f"Retrieved document to sign: {filename}")
-
+        form_list = session.get("form_global")
         data = []
-        for doc in signed_document:
+
+        for form, doc in zip(form_list, signed_document):
+            filename = form["filename"]
+            if not filename:
+                return "Filename is required", 400  # Return an error if filename is None
+            app.logger.info(f"Retrieved document to sign: {filename}")
+
             print(doc)
             new_name = add_suffix_to_filename(os.path.basename(filename))
             mime_type, _ = mimetypes.guess_type(filename)
@@ -191,7 +219,10 @@ def wait_for_signed_document():
                 'document_filename': new_name
             }
             data.append(info)
-        return json.dumps(data)
+
+        remove_session_values("form_global")
+
+        return jsonify(data)
 
 def add_suffix_to_filename(filename, suffix="_signed"):
     name, ext = os.path.splitext(filename)

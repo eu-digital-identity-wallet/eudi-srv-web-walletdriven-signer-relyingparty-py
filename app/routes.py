@@ -15,7 +15,7 @@
 # limitations under the License.
 ###############################################################################
 
-import os, base64, qrcode, io, mimetypes, json, time
+import os, base64, qrcode, io, mimetypes, time
 from flask import (
     Blueprint, render_template, request, session, send_from_directory, current_app as app, Response, jsonify
 )
@@ -43,7 +43,7 @@ def select_document():
 @login_required
 def check():
     document_type_chosen = request.form["items"]
-    print(document_type_chosen)
+    app.logger.info("The document type chosen to sign is: "+document_type_chosen)
 
     documents_chosen = []
     signature_format = []
@@ -68,10 +68,7 @@ def check():
 
     hash_algos = [{"name":"SHA256", "oid":"2.16.840.1.101.3.4.2.1"}]
 
-    list_par = list(zip(documents_chosen, signature_format))
-    print(list_par)
-
-    return render_template('select-options-page.html', list_docs=list_par, digest_algorithms=hash_algos)
+    return render_template('select-options-page.html', list_docs=list(zip(documents_chosen, signature_format)), digest_algorithms=hash_algos)
 
 # Retrieve document with given name
 @rp.route('/document/<path:filename>', methods=['GET'])
@@ -115,7 +112,13 @@ def get_base64_document(filename):
 
     return base64_document
 
-def start_wallet_interaction(wallet_url):
+@rp.route("/document/sign/scheme")
+@login_required
+def select_client_id_scheme():
+    return render_template("select-scheme-options.html")
+
+
+def start_wallet_interaction(wallet_url, scheme):
     form_list = session.get("form_global")
     if form_list is None:
         app.logger.error("The Signature Options Form is missing.")
@@ -150,7 +153,8 @@ def start_wallet_interaction(wallet_url):
         documents_url=documents_url,
         hash_algorithm_oid=hash_algorithm_oid,
         response_type="sign_response",
-        wallet_url=wallet_url
+        wallet_url=wallet_url,
+        client_id_scheme = scheme
     )    
     app.logger.info(f"Link to Wallet Tester: {link_to_wallet_tester} & Response URI: {nonce}")
     
@@ -168,13 +172,23 @@ def start_wallet_interaction(wallet_url):
 @rp.route("/document/sign/tester", methods=['GET'])
 @login_required
 def sign_with_wallet_tester():
+    client_id_scheme = request.args.get("scheme")
+    if client_id_scheme != "pre-registered" and client_id_scheme != "x509_san_dns":
+        return render_template("500.html")
+    app.logger.info("Client Id Scheme: "+client_id_scheme)
+
     wallet_url = Config.wallet_url
-    return start_wallet_interaction(wallet_url)
+    return start_wallet_interaction(wallet_url, client_id_scheme)
 
 @rp.route("/document/sign/wallet", methods=['GET'])
-def sign_with_wallet(): 
+def sign_with_wallet():
+    client_id_scheme = request.args.get("scheme")
+    if client_id_scheme != "pre-registered" and client_id_scheme != "x509_san_dns":
+        return render_template("500.html")
+    app.logger.info("Client Id Scheme: " + client_id_scheme)
+
     wallet_url = "mdoc-openid4vp://" + Config.service_url
-    return start_wallet_interaction(wallet_url)
+    return start_wallet_interaction(wallet_url, client_id_scheme)
     
 @rp.route("/document/signed", methods=['GET'])
 def wait_for_signed_document():

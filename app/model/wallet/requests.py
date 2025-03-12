@@ -9,9 +9,9 @@ from model import keys as keys_service
 jwt_algorithm = Config.jwt_algorithm
 
 # RP generates a Request similar to Authorization Request from [OpenID4VP]
-def sd_retrieval_from_authorization_request(documents_info, documents_url, hash_algorithm_oid, response_type, wallet_url):
+def sd_retrieval_from_authorization_request(documents_info, documents_url, hash_algorithm_oid, response_type, wallet_url, client_id_scheme):
     # Obtain the client_id
-    client_id, client_id_scheme = get_client_id_and_client_id_scheme()
+    client_id, client_id_scheme = get_client_id_and_client_id_scheme(client_id_scheme)
     app.logger.info("Retrieved the client id: "+client_id)
     
     # Generate random nonce
@@ -44,8 +44,11 @@ def sd_retrieval_from_authorization_request(documents_info, documents_url, hash_
 
     return link_to_wallet_tester, nonce
 
-def get_client_id_and_client_id_scheme():
-    return "walletcentric.signer.eudiw.dev", "x509_san_dns"
+def get_client_id_and_client_id_scheme(scheme):
+    if scheme == "x509_san_dns":
+        return Config.service_domain, "x509_san_dns"
+    if scheme == "pre-registered":
+        return Config.pre_defined_client_id, "pre-registered"
 
 def get_document_digest(documents_info, hash_algorithm_oid):
     documents_digests = []
@@ -95,19 +98,21 @@ def generate_request_object(response_type, client_id, client_id_scheme, response
     }
     return payload
 
-def get_jar_from_request_object(request_object):
+def get_jar_from_request_object(request_object, scheme):
     private_key = keys_service.get_jwt_private_key()
+    if scheme == "x509_san_dns":
+        certificate_chain = []
+        leaf_certificate = keys_service.get_jwt_certificate()
+        certificate_chain.append(leaf_certificate)
+        ca_certificate = keys_service.get_jwt_ca_certificate()
+        certificate_chain.append(ca_certificate)
 
-    certificate_chain = []
-    leaf_certificate = keys_service.get_jwt_certificate()
-    certificate_chain.append(leaf_certificate)
-    ca_certificate = keys_service.get_jwt_ca_certificate()
-    certificate_chain.append(ca_certificate)
+        headers = {"x5c":certificate_chain}
+        token = jwt.encode(request_object, private_key, algorithm=jwt_algorithm, headers=headers)
 
-    headers = {"x5c":certificate_chain}
-    print(headers)
+    if scheme == "pre-registered":
+        token = jwt.encode(request_object, private_key, algorithm=jwt_algorithm)
 
-    token = jwt.encode(request_object, private_key, algorithm=jwt_algorithm, headers=headers)
     print(token)
     return token
 

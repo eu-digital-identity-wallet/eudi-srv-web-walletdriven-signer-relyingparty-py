@@ -75,55 +75,72 @@ pip install -r app/requirements.txt
 
 Copy \_config.py to config.py and modify the following configuration variables:
 
-- **secret_key**: define a secure and random key
-- **jwt_secret**: define a secure and random key used to generate a JWT
-- **jwt_algorithm**: define an algorithm to generate a JWT
-- **service_url**: the base URL of the service
-- **wallet_url**: the URL of the wallet app's endpoint where the signature request is made
+- **secret_key**: Define a secure and random key
+- **jwt_private_key_path**: Path to the private key file used for signing JWTs. 
+- **jwt_private_key_passphrase**: Passphrase for the private key (if applicable).
+- **jwt_certificate_path**: Path to the JWT certificate file.
+- **jwt_ca_certificate_path**: Path to the CA certificate file.
+- **jwt_algorithm**: Algorithm used to generate JWTs.
+- **service_url**: Base URL of the service.
+- **service_domain**: Define the service domain.
+- **wallet_url**: URL of the wallet app endpoint for signature requests.
+- **db_name**: Name of the database.
+- **db_user**: Database username.
+- **db_password**: Database user password.
 
 ### Step 7: Set up the Database:
 
 1. **Create database with {db_name}**
 
-```
-CREATE DATABASE {db_name};
-```
+    ```
+    CREATE DATABASE {db_name};
+    ```
 
 2. **Create a database user**
 
-```
-CREATE USER {user_name}@'localhost' IDENTIFIED BY {user_password};
-GRANT ALL PRIVILEGES ON *.* TO {user_name}@'localhost';
-```
+    ```
+    CREATE USER {db_user}@'localhost' IDENTIFIED BY {db_password};
+    GRANT ALL PRIVILEGES ON *.* TO {db_user}@'localhost';
+    ```
 
 3. **Create required database tables**
 
-```
-use {db_name};
-create table sd (client_id varchar(255), request_object varchar(1024));
-create table sdo (client_id varchar(255), signed_data_object TEXT(153600));
-```
+    ```
+    use {db_name};
+    create table sd (request_id varchar(255), request_object text);
+    create table sdo (id int NOT NULL AUTO_INCREMENT, request_id varchar(255), signed_data_object mediumtext, error varchar(255), PRIMARY KEY (id));
+    ```
 
 4. **Update config.py**
 
-Add the following parameters to the 'config.py':
-
-```
-db_host = 'localhost'
-db_port = '3306'
-db_name = {db_name}
-db_user = {db_user}
-db_password = {db_password}
-```
+    Add the following parameters to the 'config.py':
+    
+    ```
+    db_host = 'localhost'
+    db_port = '3306'
+    db_name = {db_name}
+    db_user = {db_user}
+    db_password = {db_password}
+    ```
 
 ### Step 8: Create a Key Pair and a Certificate
+
+Use OpenSSL to generate a private key and a certificate signing request:
 
 ```shell
 openssl genpkey -genparam -algorithm ec -pkeyopt ec_paramgen_curve:P-256 -out ECPARAM.pem
 openssl req -newkey ec:ECPARAM.pem -keyout PRIVATEKEY.key -out MYCSR.csr -config csr.conf
 ```
 
-### Step 8: Run the Application
+Submit the certificate signing request (MYCSR.csr) to a Certification Authority. 
+Once issued, update config.py with the appropriate paths:
+- **jwt_private_key_path**: Path to the private key file.
+- **jwt_private_key_password**: Passphrase for the private key (if applicable).
+- **jwt_certificate_path**: Path to the issued certificate file.
+- **jwt_ca_certificate_path**: Path to the CA certificate file.
+- **jwt_algorithm**: Algorithm used to generate JWTs.
+
+### Step 9: Run the Application
 
 Run the EUDI Wallet-Driven Relying Party application (on <http://127.0.0.1:5000>)
 

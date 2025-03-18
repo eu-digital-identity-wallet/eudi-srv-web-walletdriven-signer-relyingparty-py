@@ -21,7 +21,7 @@ the [EUDI Wallet Reference Implementation project description](https://github.co
 
 This repository contains the implementation of Relying Party (RP) Web Service for the Wallet-driven release of the remote Qualified Electronic Signature (rQES) component.
 
-This service allows documents to be signed using the EUDI Wallet. The user can select a sample document, which is then sent for signing in the EUDI Wallet environment. The service then waits for a response from the Wallet.
+This service allows documents to be signed using the EUDI Wallet. The user can select a sample document, which is then sent for signing in the EUDI Wallet. The service then waits for a response from the Wallet.
 
 ## Disclaimer
 

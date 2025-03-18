@@ -1,6 +1,6 @@
 # coding: latin-1
 ###############################################################################
-# Copyright 2024 European Commission
+# Copyright 2025 European Commission
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ from flask import (
 from flask_login import login_required
 from app_config.config import ConfigClass as Config
 import model.wallet.requests as wallet_interaction
+import model.wallet.db as db
 
 rp = Blueprint("RP", __name__, url_prefix="/rp/tester")
 rp.template_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'template/')
@@ -38,12 +39,11 @@ def select_document():
     remove_session_values(variable_name="form_global")
     return render_template('select-document-page.html')
 
-# Present page with signing options
 @rp.route('/document/options', methods=['POST'])
 @login_required
 def check():
     document_type_chosen = request.form["items"]
-    app.logger.info("The document type chosen to sign is: "+document_type_chosen)
+    app.logger.info(f"Document Types Selected: {document_type_chosen}.")
 
     documents_chosen = []
     signature_format = []
@@ -61,34 +61,31 @@ def check():
         signature_format.append('XAdES')
     if 'pdf' not in document_type_chosen and 'json' not in document_type_chosen and 'txt' not in document_type_chosen and 'xml' not in document_type_chosen:
         app.logger.error("The document type selected is not supported.")
-        return render_template('500.html', error="The type of the document selected is not supported.")
-    app.logger.info("Successfully retrieved the filename.")
-    
-    app.logger.info("Successfully retrieved the signature format.")
+        return render_template('500.html', error="One of the types selected is not supported.")
+    app.logger.info("Successfully retrieved the filename: "+ str(documents_chosen))
 
     hash_algos = [{"name":"SHA256", "oid":"2.16.840.1.101.3.4.2.1"}]
-
     return render_template('select-options-page.html', list_docs=list(zip(documents_chosen, signature_format)), digest_algorithms=hash_algos)
 
 # Retrieve document with given name
 @rp.route('/document/<path:filename>', methods=['GET'])
 def serve_docs(filename):
+    app.logger.info("Requested the file: "+ filename)
     return send_from_directory('docs', filename)
 
 @rp.route("/document/sign", methods=['POST'])
 @login_required
 def sca_signature_flow():
-    form_local = request.form
-    print(form_local)
+    form = request.form
+    app.logger.info("Received a form with signing options for the document "+form.get("filename"))
 
     form_global = session.get("form_global")
     if form_global is None:
-        form_global = [form_local]
+        form_global = [form]
         update_session_values(variable_name="form_global", variable_value=form_global)
     else:
-        form_global.append(form_local)
+        form_global.append(form)
         update_session_values(variable_name="form_global", variable_value=form_global)
-    print(session.get("form_global"))
 
     app.logger.info("Successfully saved the options chosen.")
     return Response("Ok", 200)
@@ -112,47 +109,40 @@ def get_base64_document(filename):
 
     return base64_document
 
+
 @rp.route("/document/sign/scheme")
 @login_required
 def select_client_id_scheme():
     return render_template("select-scheme-options.html")
 
-
 def start_wallet_interaction(wallet_url, scheme):
-    form_list = session.get("form_global")
-    if form_list is None:
-        app.logger.error("The Signature Options Form is missing.")
+    list_forms = session.get("form_global")
+    if list_forms is None:
+        app.logger.error("The signature options information is missing.")
         render_template("500.html", error="The signature settings are missing.")
-
-    print(len(form_list))
 
     documents_info = []
     documents_url = []
     hash_algorithm_oid = None
 
-    for form in form_list:
-        filename = form["filename"]
+    for form in list_forms:
+        filename = form.get("filename")
+        hash_algorithm_oid = form.get("digest_algorithm")
         if filename is None:
             app.logger.error("The filename is missing.")
-            render_template("500.html", error="Filename is missing.")
-        app.logger.info(f"Retrieved document to sign: {filename}")
-    
+            render_template("500.html", error="One of the filenames is missing.")
+        app.logger.info(f"Document to sign: {filename}. Hash Algorithm: {hash_algorithm_oid}")
+
         base64_document = get_base64_document(filename)
         documents_info.append({"filename": filename, "document_base64": base64_document})
 
-        hash_algorithm_oid = form["digest_algorithm"]
-        app.logger.info("Hash Algorithm: "+hash_algorithm_oid)
-      
         document_url = route_url+"/document/"+filename
         documents_url.append(document_url)
-        app.logger.info(f"Retrieve Document URL: {document_url}")
-
 
     link_to_wallet_tester, nonce = wallet_interaction.sd_retrieval_from_authorization_request(
-        documents_info = documents_info,
+        documents_info=documents_info,
         documents_url=documents_url,
         hash_algorithm_oid=hash_algorithm_oid,
-        response_type="sign_response",
         wallet_url=wallet_url,
         client_id_scheme = scheme
     )    
@@ -181,6 +171,7 @@ def sign_with_wallet_tester():
     return start_wallet_interaction(wallet_url, client_id_scheme)
 
 @rp.route("/document/sign/wallet", methods=['GET'])
+@login_required
 def sign_with_wallet():
     client_id_scheme = request.args.get("scheme")
     if client_id_scheme != "pre-registered" and client_id_scheme != "x509_san_dns":
@@ -191,17 +182,16 @@ def sign_with_wallet():
     return start_wallet_interaction(wallet_url, client_id_scheme)
     
 @rp.route("/document/signed", methods=['GET'])
+@login_required
 def wait_for_signed_document():
     nonce = request.args.get('nonce')
     app.logger.info(f"Response URI where to retrieve signed document: {nonce}")
-    
     timeout = time.time() + 60*10 # 10 minutes
     
     signed_document = None
     found = False 
     while not found and time.time() < timeout:
         response = wallet_interaction.retrieve_signed_objects(nonce=nonce)
-        print(response)
         if response is not None:
             found = True
             signed_document = response
@@ -211,20 +201,16 @@ def wait_for_signed_document():
             time.sleep(15)
     
     if not found:
+        db.remove_request_object_with_request_id(nonce)
         remove_session_values("form_global")
         return Response("Relying Party Tester timed out while waiting for the signed document from the Wallet.", status=408)
-        
     else:
         form_list = session.get("form_global")
         data = []
-
         for form, doc in zip(form_list, signed_document):
-            filename = form["filename"]
-            if not filename:
-                return "Filename is required", 400  # Return an error if filename is None
-            app.logger.info(f"Retrieved document to sign: {filename}")
+            filename = form.get("filename")
+            app.logger.info(f"Found the filename to sign {filename} and expected signed document.")
 
-            print(doc)
             new_name = add_suffix_to_filename(os.path.basename(filename))
             mime_type, _ = mimetypes.guess_type(filename)
             info = {
@@ -233,9 +219,7 @@ def wait_for_signed_document():
                 'document_filename': new_name
             }
             data.append(info)
-
         remove_session_values("form_global")
-
         return jsonify(data)
 
 def add_suffix_to_filename(filename, suffix="_signed"):

@@ -1,6 +1,6 @@
 # coding: latin-1
 ###############################################################################
-# Copyright (c) 2023 European Commission
+# Copyright (c) 2025 European Commission
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,15 +21,44 @@ Application Initialization File:
 Handles application setup, configuration, and exception handling.
 """
 
-import os, sys, logging
+import os, sys
+from logging.config import dictConfig
+
 from flask import Flask, render_template
 from flask_session import Session
 from flask_cors import CORS
 from app.app_config.config import ConfigClass
 from app.model import keys as keys_service
 
-# Extend system path to include the current directory
 sys.path.append(os.path.dirname(__file__))
+
+dictConfig(
+    {
+        "version": 1,
+        "formatters": {
+            "default": {
+                "format": "[%(asctime)s] %(levelname)s | %(module)s (%(funcName)s): %(message)s",
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+            }
+        },
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "stream": "ext://sys.stdout",
+                "formatter": "default",
+            },
+            "file": {
+                "class": "logging.handlers.TimedRotatingFileHandler",
+                "filename": "logs/flask.log",
+                "when": "D",
+                "interval": 7, # a new file for every week
+                "backupCount": 5, # the number of files that will be retained on the disk
+                "formatter": "default",
+            },
+        },
+        "root": {"level": "INFO", "handlers": ["console", "file"]},
+    }
+)
 
 def handle_exception():
     return (
@@ -64,9 +93,7 @@ def create_app():
 
     app = Flask(__name__, instance_relative_config=True, static_url_path='/rp/static')
     app.config['SECRET_KEY'] = ConfigClass.secret_key
-    
-    app.logger.setLevel(logging.INFO)
-    
+
     # Initialize LoginManager
     from flask_login import LoginManager
     login_manager = LoginManager()
@@ -77,8 +104,7 @@ def create_app():
     def load_user(user_id):
         from model.user import User
         from model.user_service import UserService
-        print(user_id)
-        return User(user_id) if any(user['username'] == user_id for user in UserService.get_users()) else None    
+        return User(user_id) if any(user['username'] == user_id for user in UserService.get_users()) else None
 
     # Register error handlers
     app.register_error_handler(404, page_not_found)
@@ -86,21 +112,18 @@ def create_app():
     # Register routes
     from . import (routes)
     app.register_blueprint(routes.rp)
-    
     import model.main.routes as main_routes
     app.register_blueprint(main_routes.base)
-
     import model.authentication.routes as authentication_routes
     app.register_blueprint(authentication_routes.auth)
-
     import model.wallet.routes as wallet_interaction_routes
     app.register_blueprint(wallet_interaction_routes.wallet)
 
     # Configure session    
     app.config["SESSION_TYPE"] = "filesystem"
     app.config["SESSION_FILE_THRESHOLD"] = 50
-    app.config["SESSION_PERMANENT"] = False # Controls whether sessions persist between app restarts.
-    app.config['SESSION_USE_SIGNER'] = True # Ensures sessions are cryptographically signed to prevent tampering
+    app.config["SESSION_PERMANENT"] = False
+    app.config['SESSION_USE_SIGNER'] = True
     app.config['SESSION_KEY_PREFIX'] = 'wallet-driven-session:'
     app.config['SESSION_COOKIE_NAME'] = "rp-portal-session"
     app.config['SESSION_COOKIE_PATH'] = '/rp'

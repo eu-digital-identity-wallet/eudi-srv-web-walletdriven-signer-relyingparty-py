@@ -109,12 +109,6 @@ def get_base64_document(filename):
 
     return base64_document
 
-
-@rp.route("/document/sign/scheme")
-@login_required
-def select_client_id_scheme():
-    return render_template("select-scheme-options.html")
-
 def start_wallet_interaction(wallet_url, scheme):
     list_forms = session.get("form_global")
     if list_forms is None:

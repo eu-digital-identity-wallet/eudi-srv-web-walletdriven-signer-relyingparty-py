@@ -1,7 +1,7 @@
 CREATE DATABASE db_name;
 
 CREATE USER 'username'@'localhost' IDENTIFIED BY 'user_password';
-GRANT ALL PRIVILEGES ON *.* TO 'username'@'localhost';
+GRANT ALL PRIVILEGES ON db_name.* TO 'username'@'localhost';
 
 USE rp;
 create table sd (request_id varchar(255), request_object text);

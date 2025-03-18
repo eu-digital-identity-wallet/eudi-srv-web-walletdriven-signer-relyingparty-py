@@ -100,7 +100,7 @@ Copy \_config.py to config.py and modify the following configuration variables:
 
     ```
     CREATE USER {db_user}@'localhost' IDENTIFIED BY {db_password};
-    GRANT ALL PRIVILEGES ON *.* TO {db_user}@'localhost';
+    GRANT ALL PRIVILEGES ON {db_name}.* TO {db_user}@'localhost';
     ```
 
 3. **Create required database tables**
@@ -126,19 +126,45 @@ Copy \_config.py to config.py and modify the following configuration variables:
 ### Step 8: Create a Key Pair and a Certificate
 
 Use OpenSSL to generate a private key and a certificate signing request:
-
-```shell
+```
 openssl genpkey -genparam -algorithm ec -pkeyopt ec_paramgen_curve:P-256 -out ECPARAM.pem
 openssl req -newkey ec:ECPARAM.pem -keyout PRIVATEKEY.key -out MYCSR.csr -config csr.conf
 ```
 
+Before executing these commands, create a configuration file named **csr.conf** with the following structure:
+```
+[req]
+distinguished_name = dn
+prompt             = no
+req_extensions = req_ext
+
+[dn]
+C={country}
+CN={common_name_rp}
+
+[req_ext]
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.0 = {domain_name}
+```
+
+Ensure that certificates retrieved from the Certification Authority (CA) are in **.cer** format. You can convert a certificate using:
+```
+openssl x509 -inform PEM -in {file_name}.pem -outform DER -out {filename}.cer
+```
+
 Submit the certificate signing request (MYCSR.csr) to a Certification Authority. 
-Once issued, update config.py with the appropriate paths:
+Once issued, update **config.py** with the appropriate paths:
 - **jwt_private_key_path**: Path to the private key file.
 - **jwt_private_key_password**: Passphrase for the private key (if applicable).
 - **jwt_certificate_path**: Path to the issued certificate file.
 - **jwt_ca_certificate_path**: Path to the CA certificate file.
 - **jwt_algorithm**: Algorithm used to generate JWTs.
+
+### Step 9: Create a Logs Folder
+
+Create a **logs** folder inside **eudi-srv-web-walletdriven-signer-relyingparty-py**.
 
 ### Step 9: Run the Application
 

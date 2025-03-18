@@ -84,6 +84,7 @@ Copy \_config.py to config.py and modify the following configuration variables:
 - **service_url**: Base URL of the service.
 - **service_domain**: Define the service domain.
 - **wallet_url**: URL of the wallet app endpoint for signature requests.
+- **pre_registered_client_id**: Pre-registered client ID for signature requests to the wallet.
 - **db_name**: Name of the database.
 - **db_user**: Database username.
 - **db_password**: Database user password.
@@ -166,7 +167,7 @@ Once issued, update **config.py** with the appropriate paths:
 
 Create a **logs** folder inside **eudi-srv-web-walletdriven-signer-relyingparty-py**.
 
-### Step 9: Run the Application
+### Step 10: Run the Application
 
 Run the EUDI Wallet-Driven Relying Party application (on <http://127.0.0.1:5000>)
 

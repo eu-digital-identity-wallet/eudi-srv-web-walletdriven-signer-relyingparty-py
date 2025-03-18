@@ -475,3 +475,20 @@ h2 {
   opacity: 0;
   visibility: hidden;
 }
+
+
+.tester-button{
+    background: none;
+    border: none;
+    color: #0048d2;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: inherit;
+    padding: 0;
+    margin-top: 10px;
+}
+
+.tester-button:hover {
+    color: #002b80;
+    text-decoration: none;
+}

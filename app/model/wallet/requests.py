@@ -26,13 +26,13 @@ from model import keys as keys_service
 jwt_algorithm = Config.jwt_algorithm
 
 # RP generates a Request similar to Authorization Request from [OpenID4VP]
-def sd_retrieval_from_authorization_request(documents_info, documents_url, hash_algorithm_oid, wallet_url):
+def sd_retrieval_from_authorization_request(documents_info, documents_url, hash_algorithm_oid, wallet_url, client_id_scheme):
     response_type = "sign_response"
     app.logger.info("Retrieved the Response Type Value.")
 
     # Obtain the client_id
-    client_id, client_id_scheme = get_client_id_and_client_id_scheme()
-    app.logger.info("Retrieved the Client Id: "+client_id)
+    client_id, client_id_scheme = get_client_id_and_client_id_scheme(client_id_scheme)
+    app.logger.info("Retrieved the client id: "+client_id)
     
     # Generate random nonce
     nonce = secrets.token_urlsafe(32)
@@ -52,8 +52,12 @@ def sd_retrieval_from_authorization_request(documents_info, documents_url, hash_
     
     # generate Request Object
     request_object = generate_request_object(response_type, client_id, client_id_scheme, response_uri, nonce, document_digests, document_locations, hash_algorithm_oid)
-    jar = get_jar_from_request_object(request_object)
-    app.logger.info("Generated the Request Object Value.")
+    try:
+        jar = get_jar_from_request_object(request_object, client_id_scheme)
+        app.logger.info("Generated the Request Object Value.")
+    except ValueError as e:
+        app.logger.error(f"An error was caught while trying to generate a JWT of a Request Object. {e}")
+        raise Exception("It was impossible to complete the request, as there was an error generating the JWT.")
 
     try:
         db.add_to_request_object_to_table(nonce, jar)
@@ -70,8 +74,11 @@ def sd_retrieval_from_authorization_request(documents_info, documents_url, hash_
 
     return link_to_wallet, nonce
 
-def get_client_id_and_client_id_scheme():
-    return "walletcentric.signer.eudiw.dev", "x509_san_dns"
+def get_client_id_and_client_id_scheme(scheme):
+    if scheme == "x509_san_dns":
+        return Config.service_domain, "x509_san_dns"
+    if scheme == "pre-registered":
+        return Config.pre_registered_client_id, "pre-registered"
 
 def get_document_digest(documents_info, hash_algorithm_oid):
     digest_oids = {
@@ -129,20 +136,25 @@ def generate_request_object(response_type, client_id, client_id_scheme, response
     app.logger.info("Formatted the Request Object.")
     return payload
 
-def get_jar_from_request_object(request_object):
+def get_jar_from_request_object(request_object, scheme):
     private_key = keys_service.get_jwt_private_key()
-
-    certificate_chain = []
-    leaf_certificate = keys_service.get_jwt_certificate()
-    certificate_chain.append(leaf_certificate)
-    ca_certificate = keys_service.get_jwt_ca_certificate()
-    certificate_chain.append(ca_certificate)
-
-    headers = {"x5c":certificate_chain}
-    app.logger.info("Added Certificate Chain to JWT Headers.")
-    token = jwt.encode(request_object, private_key, algorithm=jwt_algorithm, headers=headers)
-    app.logger.info("Generated a JWT with the Request Object.")
-    return token
+    if scheme == "x509_san_dns":
+        certificate_chain = []
+        leaf_certificate = keys_service.get_jwt_certificate()
+        certificate_chain.append(leaf_certificate)
+        ca_certificate = keys_service.get_jwt_ca_certificate()
+        certificate_chain.append(ca_certificate)
+        headers = {"x5c":certificate_chain}
+        app.logger.info("Added Certificate Chain to JWT Headers.")
+        token = jwt.encode(request_object, private_key, algorithm=jwt_algorithm, headers=headers)
+        app.logger.info("Generated a JWT with the Request Object.")
+        return token
+    elif scheme == "pre-registered":
+        token = jwt.encode(request_object, private_key, algorithm=jwt_algorithm)
+        app.logger.info("Generated a JWT with the Request Object.")
+        return token
+    else:
+        raise ValueError("The client_id_scheme selected is not supported.")
 
 def retrieve_signed_objects(nonce):
     app.logger.info(f"Checking if the signed data of the request {nonce} is in the DB.")

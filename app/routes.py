@@ -43,7 +43,7 @@ def select_document():
 @login_required
 def check():
     document_type_chosen = request.form["items"]
-    app.logger.info("Document Types Selected: "+ str(document_type_chosen))
+    app.logger.info(f"Document Types Selected: {document_type_chosen}.")
 
     documents_chosen = []
     signature_format = []
@@ -67,6 +67,7 @@ def check():
     hash_algos = [{"name":"SHA256", "oid":"2.16.840.1.101.3.4.2.1"}]
     return render_template('select-options-page.html', list_docs=list(zip(documents_chosen, signature_format)), digest_algorithms=hash_algos)
 
+# Retrieve document with given name
 @rp.route('/document/<path:filename>', methods=['GET'])
 def serve_docs(filename):
     app.logger.info("Requested the file: "+ filename)
@@ -108,7 +109,7 @@ def get_base64_document(filename):
 
     return base64_document
 
-def start_wallet_interaction(wallet_url):
+def start_wallet_interaction(wallet_url, scheme):
     list_forms = session.get("form_global")
     if list_forms is None:
         app.logger.error("The signature options information is missing.")
@@ -136,7 +137,8 @@ def start_wallet_interaction(wallet_url):
         documents_info=documents_info,
         documents_url=documents_url,
         hash_algorithm_oid=hash_algorithm_oid,
-        wallet_url=wallet_url
+        wallet_url=wallet_url,
+        client_id_scheme = scheme
     )    
     app.logger.info(f"Link to Wallet Tester: {link_to_wallet_tester} & Response URI: {nonce}")
     
@@ -154,14 +156,24 @@ def start_wallet_interaction(wallet_url):
 @rp.route("/document/sign/tester", methods=['GET'])
 @login_required
 def sign_with_wallet_tester():
+    client_id_scheme = request.args.get("scheme")
+    if client_id_scheme != "pre-registered" and client_id_scheme != "x509_san_dns":
+        return render_template("500.html")
+    app.logger.info("Client Id Scheme: "+client_id_scheme)
+
     wallet_url = Config.wallet_url
-    return start_wallet_interaction(wallet_url)
+    return start_wallet_interaction(wallet_url, client_id_scheme)
 
 @rp.route("/document/sign/wallet", methods=['GET'])
 @login_required
-def sign_with_wallet(): 
+def sign_with_wallet():
+    client_id_scheme = request.args.get("scheme")
+    if client_id_scheme != "pre-registered" and client_id_scheme != "x509_san_dns":
+        return render_template("500.html")
+    app.logger.info("Client Id Scheme: " + client_id_scheme)
+
     wallet_url = "mdoc-openid4vp://" + Config.service_url
-    return start_wallet_interaction(wallet_url)
+    return start_wallet_interaction(wallet_url, client_id_scheme)
     
 @rp.route("/document/signed", methods=['GET'])
 @login_required

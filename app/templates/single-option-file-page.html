@@ -28,7 +28,6 @@ limitations under the License.
       </div>
     </div>
     <div class="select-document-column options-form">
-      <div id="toast" class="toast">Form submitted successfully!</div>
       <form id="options-form-{{ filename | replace('.', '-') | replace(' ', '-') }}" action="{{ url_for('RP.sca_signature_flow') }}" method="post">
         <input type="hidden" name="filename" value="{{ filename }}" />
 
@@ -202,18 +201,7 @@ limitations under the License.
       `<p class="legend">Select the packaging:</p>` + packagingHtml;
   }
 
-  function showToast(message) {
-    let toast = document.getElementById("toast");
-    toast.textContent = message;
-    toast.classList.add("show");
 
-    setTimeout(() => {
-        toast.classList.add("hide");
-        setTimeout(() => {
-            toast.classList.remove("show", "hide");
-        }, 500); // Wait for fade-out transition
-    }, 3000);
-  }
 
   document.addEventListener("DOMContentLoaded", function () {
 

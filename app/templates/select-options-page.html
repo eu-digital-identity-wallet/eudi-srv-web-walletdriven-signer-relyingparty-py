@@ -22,6 +22,8 @@ limitations under the License.
 
     <div class="genericErrors" id="genericErrorsDesc"></div>
 
+    <div id="toast" class="toast">Form submitted successfully!</div>
+
     {% for filename, signature_format in list_docs %} {%
     include 'single-option-file-page.html' %} {% endfor %}
 
@@ -40,6 +42,19 @@ limitations under the License.
     console.log(`Form for ${filename} submitted`);
   }
 
+  function showToast(message) {
+    let toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.classList.add("show");
+
+    setTimeout(() => {
+        toast.classList.add("hide");
+        setTimeout(() => {
+            toast.classList.remove("show", "hide");
+        }, 500); // Wait for fade-out transition
+    }, 3000);
+  }
+
   var docs = {{ list_docs | tojson }};
   console.log(docs);
 
@@ -53,10 +68,9 @@ limitations under the License.
     console.log(submittedCount);
 
     if (submittedCount === totalForms) {
-      alert("All forms submitted! Proceeding...");
       window.location.href = "{{ url_for('RP.sca_signature_page') }}";
     } else {
-      alert(`You need to submit all forms before continuing! (${submittedCount}/${totalForms} submitted)`);
+      showToast(`You need to submit all forms before continuing! (${submittedCount}/${totalForms} submitted)`);
     }
   }
 

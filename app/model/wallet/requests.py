@@ -78,7 +78,7 @@ def get_client_id_and_client_id_scheme(scheme):
     if scheme == "x509_san_dns":
         return Config.service_domain, "x509_san_dns"
     if scheme == "pre-registered":
-        return Config.pre_defined_client_id, "pre-registered"
+        return Config.pre_registered_client_id, "pre-registered"
 
 def get_document_digest(documents_info, hash_algorithm_oid):
     digest_oids = {

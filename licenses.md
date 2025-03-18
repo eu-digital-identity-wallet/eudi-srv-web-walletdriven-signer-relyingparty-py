@@ -78,3 +78,8 @@ _2025-01-13 12:11:20 CET_
 
 > - **Project URL**: [https://fonts.google.com/specimen/Poppins](https://fonts.google.com/specimen/Poppins)
 > - **License**: MIT License - [https://fonts.google.com/specimen/Poppins/license](https://fonts.google.com/specimen/Poppins/license)
+
+**16** **Name:** `Font Awesome` **Version:** `6.0.0`
+
+> - **Project URL**: [https://fontawesome.com/](https://fontawesome.com/)
+> - **License**: CC BY 4.0 License, SIL OFL 1.1 License, MIT License - [https://github.com/FortAwesome/Font-Awesome/blob/6.x/LICENSE.txt](https://github.com/FortAwesome/Font-Awesome/blob/6.x/LICENSE.txt)

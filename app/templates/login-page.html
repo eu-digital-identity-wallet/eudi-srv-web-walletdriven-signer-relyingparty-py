@@ -1,0 +1,134 @@
+<!--
+Copyright 2025 European Commission
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+{% extends 'base.html' %} {% block content %}
+<div class="container-fluid h-100">
+  <div id="content" class="content-box col-md-11">
+    <!-- Error message display -->
+    {% with messages = get_flashed_messages() %} {% if messages %}
+    <div class="error-message">
+      {% for message in messages %}
+      <p>{{ message }}</p>
+      {% endfor %}
+    </div>
+    {% endif %} {% endwith %}
+
+    <div class="login-content">
+      <h2>Welcome to the</h2>
+      <h1>Relying Party Tester</h1>
+
+      <form action="{{ url_for('auth.login') }}" method="POST">
+        <div class="input-group">
+          <label for="username">Username</label>
+          <div class="input-field">
+            <i class="fas fa-envelope"></i>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              placeholder="Username"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="password">Password</label>
+          <div class="input-field">
+            <i class="fas fa-key"></i>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="**********"
+              required
+            />
+            <i
+              class="fas fa-eye toggle-password"
+              onclick="togglePassword()"
+            ></i>
+          </div>
+        </div>
+        <div class="user-for-testing">
+          <a onclick="openPopup()">Users for Testing</a>
+        </div>
+
+        <!-- Submit button -->
+        <button type="submit" class="btn login-custom-btn">Login</button>
+      </form>
+
+      <!-- Pop-up to display test user information -->
+      <div class="popup" id="popup">
+        <div class="popup-close">
+          <button onclick="closePopup()">Close</button>
+        </div>
+        <h3>Test User Information</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Password</th>
+            </tr>
+          </thead>
+          <tbody id="user-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Pass the users from Flask to JavaScript using JSON
+    const p_users = {{ rp_users | tojson }};
+    console.log(p_users);
+
+    function openPopup() {
+      const popup = document.getElementById("popup");
+      const tableBody = document.getElementById("user-table-body");
+
+      tableBody.innerHTML = "";
+      p_users.forEach((user) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+                <td>${user.username}</td>
+                <td>${user.password}</td>
+            `;
+        tableBody.appendChild(row);
+      });
+      popup.style.display = "block";
+    }
+
+    function closePopup() {
+      const popup = document.getElementById("popup");
+      popup.style.display = "none";
+    }
+
+    function togglePassword() {
+      const passwordField = document.getElementById("password");
+      const eyeIcon = document.querySelector(".toggle-password");
+      if (passwordField.type === "password") {
+        passwordField.type = "text";
+        eyeIcon.classList.remove("fa-eye");
+        eyeIcon.classList.add("fa-eye-slash");
+      } else {
+        passwordField.type = "password";
+        eyeIcon.classList.remove("fa-eye-slash");
+        eyeIcon.classList.add("fa-eye");
+      }
+    }
+  </script>
+</div>
+
+{% endblock %}

@@ -1,0 +1,90 @@
+<!--
+Copyright 2025 European Commission
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+{% extends 'base.html' %} {% block content %}
+<div class="container-fluid h-100">
+  <div class="content-box col-md-11 mx-auto text-center">
+    <!-- Error message display -->
+    {% with messages = get_flashed_messages() %} {% if messages %}
+    <ul class="error-message">
+      {% for message in messages %}
+      <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %} {% endwith %}
+
+    <h1>Sign Document</h1>
+    <h2>Sign with Wallet</h2>
+
+    <button class="btn custom-btn" onclick="selectWalletOption()">
+      Test with EUDI Wallet
+    </button>
+
+    <div id="wallet-option">
+      <a
+        href="{{ url_for('RP.sign_with_wallet', scheme='x509_san_dns') }}"
+        style="text-decoration: none"
+      >
+        Test with X509_Sans_Uri
+          <i class="fa-solid fa-arrow-right"></i>
+      </a>
+      <br>
+      <a
+        href="{{ url_for('RP.sign_with_wallet', scheme='pre-registered') }}"
+        style="text-decoration: none"
+      >
+        Test with Pre-Registered
+          <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+
+    <button onclick="selectTesterOption()" class="tester-button">
+      Test with Wallet Tester (for internal development)
+    </button>
+    <div id="tester-option">
+      <a
+        href="{{ url_for('RP.sign_with_wallet_tester', scheme='x509_san_dns') }}"
+        style="color: #0048d2; margin-top: 5px"
+      >
+        Test with X509_Sans_Uri
+          <i class="fa-solid fa-arrow-right"></i>
+      </a>
+      <br>
+      <a
+        href="{{ url_for('RP.sign_with_wallet_tester', scheme='pre-registered') }}"
+        style="color: #0048d2; margin-top: 5px"
+      >
+        Test with Pre-Registered
+          <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+</div>
+<script>
+  document.getElementById("wallet-option").hidden = true;
+  document.getElementById("tester-option").hidden = true;
+
+  function selectWalletOption() {
+    document.getElementById("wallet-option").hidden = false;
+    document.getElementById("tester-option").hidden = true;
+  }
+
+  function selectTesterOption() {
+    document.getElementById("wallet-option").hidden = true;
+    document.getElementById("tester-option").hidden = false;
+  }
+</script>
+{% endblock %}

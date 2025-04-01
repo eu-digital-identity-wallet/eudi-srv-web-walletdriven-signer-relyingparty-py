@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ###############################################################################
+import base64
 
 import jwt, secrets, hashlib
 from model.wallet import db
@@ -96,8 +97,9 @@ def get_document_digest(documents_info, hash_algorithm_oid):
         if isinstance(document_base64, str):
             document_base64 = document_base64.encode('utf-8')
 
+        document_content = base64.b64decode(document_base64)
         hash_func = hashlib.new(hash_name)
-        hash_func.update(document_base64)
+        hash_func.update(document_content)
 
         documents_digests.append({
             "hash": hash_func.hexdigest(),

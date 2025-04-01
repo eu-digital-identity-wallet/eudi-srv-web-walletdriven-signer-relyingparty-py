@@ -105,8 +105,9 @@ def get_base64_document(filename):
 
     # Read the content of the file to encode it in base64
     with open(file_path, 'rb') as document:
-        base64_document = base64.b64encode(document.read()).decode("utf-8")
+        document_content = document.read()
 
+    base64_document = base64.b64encode(document_content).decode("utf-8")
     return base64_document
 
 def start_wallet_interaction(wallet_url, scheme):
@@ -172,7 +173,7 @@ def sign_with_wallet():
         return render_template("500.html")
     app.logger.info("Client Id Scheme: " + client_id_scheme)
 
-    wallet_url = "mdoc-openid4vp://" + Config.service_url
+    wallet_url = "mdoc-openid4vp://" + Config.service_domain
     return start_wallet_interaction(wallet_url, client_id_scheme)
     
 @rp.route("/document/signed", methods=['GET'])

@@ -93,16 +93,13 @@ def get_document_digest(documents_info, hash_algorithm_oid):
     documents_digests = []
     for doc_info in documents_info:
         filename = doc_info["filename"]
-        document_base64 = doc_info["document_base64"]
-        if isinstance(document_base64, str):
-            document_base64 = document_base64.encode('utf-8')
-
-        document_content = base64.b64decode(document_base64)
+        document_content = doc_info["document_content"]
         hash_func = hashlib.new(hash_name)
         hash_func.update(document_content)
+        hash_base64_encoded = base64.b64encode(hash_func.digest()).decode("utf-8")
 
         documents_digests.append({
-            "hash": hash_func.hexdigest(),
+            "hash": hash_base64_encoded,
             "label": filename
         })
         app.logger.info("Calculated Document Digest of the file: " + filename)

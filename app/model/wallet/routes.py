@@ -47,9 +47,9 @@ def place_signed_document(nonce):
         return jsonify({"error": "Invalid request format"}), 400
 
     error = form.get("error")
-    app.logger.error(error)
+    app.logger.info("Error: "+error)
     state = form.get("state")
-    app.logger.info(state)
+    app.logger.info("State: "+state)
 
     if not db.exists_request_object_with_request_id(nonce):
         return f"The application has no record of a request associated to {nonce}", 400

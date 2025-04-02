@@ -172,9 +172,22 @@ def sign_with_wallet():
         return render_template("500.html")
     app.logger.info("Client Id Scheme: " + client_id_scheme)
 
-    wallet_url = "mdoc-openid4vp://" + Config.service_url
+    wallet_url = "mdoc-openid4vp://" + Config.service_domain
     return start_wallet_interaction(wallet_url, client_id_scheme)
-    
+
+
+@rp.route("/document/sign/wallet/reference-implementation", methods=['GET'])
+@login_required
+def sign_with_reference_implementation():
+    client_id_scheme = request.args.get("scheme")
+    if client_id_scheme != "pre-registered" and client_id_scheme != "x509_san_dns":
+        return render_template("500.html")
+    app.logger.info("Client Id Scheme: " + client_id_scheme)
+
+    wallet_url = "eudi-rqes://" + Config.service_domain
+    return start_wallet_interaction(wallet_url, client_id_scheme)
+
+
 @rp.route("/document/signed", methods=['GET'])
 @login_required
 def wait_for_signed_document():

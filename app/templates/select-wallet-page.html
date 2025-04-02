@@ -32,7 +32,6 @@ limitations under the License.
     <button class="btn custom-btn" onclick="selectWalletOption()">
       Test with EUDI Wallet
     </button>
-
     <div id="wallet-option">
       <a
         href="{{ url_for('RP.sign_with_wallet', scheme='x509_san_dns') }}"
@@ -44,6 +43,27 @@ limitations under the License.
       <br>
       <a
         href="{{ url_for('RP.sign_with_wallet', scheme='pre-registered') }}"
+        style="text-decoration: none"
+      >
+        Test with Pre-Registered
+          <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+
+    <button class="btn custom-btn" onclick="selectReferenceImplementationOption()">
+      Test with Reference Implementation
+    </button>
+    <div id="ri-option">
+      <a
+        href="{{ url_for('RP.sign_with_reference_implementation', scheme='x509_san_dns') }}"
+        style="text-decoration: none"
+      >
+        Test with X509_Sans_Uri
+          <i class="fa-solid fa-arrow-right"></i>
+      </a>
+      <br>
+      <a
+        href="{{ url_for('RP.sign_with_reference_implementation', scheme='pre-registered') }}"
         style="text-decoration: none"
       >
         Test with Pre-Registered
@@ -76,14 +96,23 @@ limitations under the License.
 <script>
   document.getElementById("wallet-option").hidden = true;
   document.getElementById("tester-option").hidden = true;
+  document.getElementById("ri-option").hidden = true;
 
   function selectWalletOption() {
     document.getElementById("wallet-option").hidden = false;
+    document.getElementById("ri-option").hidden = true;
+    document.getElementById("tester-option").hidden = true;
+  }
+
+  function selectReferenceImplementationOption() {
+    document.getElementById("wallet-option").hidden = true;
+    document.getElementById("ri-option").hidden = false;
     document.getElementById("tester-option").hidden = true;
   }
 
   function selectTesterOption() {
     document.getElementById("wallet-option").hidden = true;
+    document.getElementById("ri-option").hidden = true;
     document.getElementById("tester-option").hidden = false;
   }
 </script>

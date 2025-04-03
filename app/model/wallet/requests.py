@@ -23,6 +23,7 @@ from flask import (
     current_app as app
 )
 from model import keys as keys_service
+from urllib.parse import quote
 
 jwt_algorithm = Config.jwt_algorithm
 
@@ -68,9 +69,10 @@ def sd_retrieval_from_authorization_request(documents_info, documents_url, hash_
         raise Exception("It was impossible to complete the request, as there was an error accessing the database.")
 
     request_uri = Config.service_url + "/wallet/sd/" + nonce
+    request_uri_url_encoded = quote(request_uri, safe="")
     app.logger.info("Generated the Request Uri Value.")
     
-    link_to_wallet = wallet_url+"?request_uri="+request_uri+"&client_id="+client_id
+    link_to_wallet = wallet_url+"?request_uri="+request_uri_url_encoded+"&client_id="+client_id
     app.logger.info("Generated the link to wallet: "+link_to_wallet)
 
     return link_to_wallet, nonce

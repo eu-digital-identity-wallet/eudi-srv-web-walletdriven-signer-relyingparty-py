@@ -73,49 +73,23 @@ limitations under the License.
       </a>
     </div>
 
-    <button onclick="selectTesterOption()" class="tester-button">
+    <a href="{{ url_for('RP.sign_with_wallet_tester', scheme='x509_san_dns') }}" class="tester-button">
       Test with Wallet Tester (for internal development)
-    </button>
-    <div id="tester-option">
-      <a
-        href="{{ url_for('RP.sign_with_wallet_tester', scheme='x509_san_dns') }}"
-        style="color: #0048d2; margin-top: 5px"
-      >
-        Test with X509_Sans_Uri
-          <i class="fa-solid fa-arrow-right"></i>
-      </a>
-      <br>
-      <a
-        href="{{ url_for('RP.sign_with_wallet_tester', scheme='pre-registered') }}"
-        style="color: #0048d2; margin-top: 5px"
-      >
-        Test with Pre-Registered
-          <i class="fa-solid fa-arrow-right"></i>
-      </a>
-    </div>
+    </a>
   </div>
 </div>
 <script>
   document.getElementById("wallet-option").hidden = true;
-  document.getElementById("tester-option").hidden = true;
   document.getElementById("ri-option").hidden = true;
 
   function selectWalletOption() {
     document.getElementById("wallet-option").hidden = false;
     document.getElementById("ri-option").hidden = true;
-    document.getElementById("tester-option").hidden = true;
   }
 
   function selectReferenceImplementationOption() {
     document.getElementById("wallet-option").hidden = true;
     document.getElementById("ri-option").hidden = false;
-    document.getElementById("tester-option").hidden = true;
-  }
-
-  function selectTesterOption() {
-    document.getElementById("wallet-option").hidden = true;
-    document.getElementById("ri-option").hidden = true;
-    document.getElementById("tester-option").hidden = false;
   }
 </script>
 {% endblock %}

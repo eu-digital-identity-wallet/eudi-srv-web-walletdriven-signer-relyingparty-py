@@ -95,7 +95,7 @@ def sca_signature_flow():
 def sca_signature_page():
     return render_template('select-wallet-page.html')
 
-def get_base64_document(filename):
+def get_document_content(filename):
     # Construct the path to the file in the "docs" folder
     file_path = os.path.join(Config.LOAD_FOLDER, filename)
 
@@ -105,9 +105,8 @@ def get_base64_document(filename):
 
     # Read the content of the file to encode it in base64
     with open(file_path, 'rb') as document:
-        base64_document = base64.b64encode(document.read()).decode("utf-8")
-
-    return base64_document
+        document_content = document.read()
+    return document_content
 
 def start_wallet_interaction(wallet_url, scheme):
     list_forms = session.get("form_global")
@@ -127,8 +126,8 @@ def start_wallet_interaction(wallet_url, scheme):
             render_template("500.html", error="One of the filenames is missing.")
         app.logger.info(f"Document to sign: {filename}. Hash Algorithm: {hash_algorithm_oid}")
 
-        base64_document = get_base64_document(filename)
-        documents_info.append({"filename": filename, "document_base64": base64_document})
+        document_content = get_document_content(filename)
+        documents_info.append({"filename": filename, "document_content": document_content})
 
         document_url = route_url+"/document/"+filename
         documents_url.append(document_url)
@@ -172,7 +171,7 @@ def sign_with_wallet():
         return render_template("500.html")
     app.logger.info("Client Id Scheme: " + client_id_scheme)
 
-    wallet_url = "mdoc-openid4vp://" + Config.service_url
+    wallet_url = "mdoc-openid4vp://" + Config.service_domain
     return start_wallet_interaction(wallet_url, client_id_scheme)
     
 @rp.route("/document/signed", methods=['GET'])

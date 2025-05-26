@@ -33,12 +33,14 @@ route_url = Config.service_url + "/tester"
 def main():
     return render_template('welcome-page.html')
 
+# Display pages where the documents to sign can be chosen
 @rp.route('/document/select', methods=['GET'])
 @login_required
 def select_document():
     remove_session_values(variable_name="form_global")
     return render_template('select-document-page.html')
 
+# Loads the selected documents and display the page to choose the signature options
 @rp.route('/document/options', methods=['POST'])
 @login_required
 def check():
@@ -62,9 +64,10 @@ def check():
     if 'pdf' not in document_type_chosen and 'json' not in document_type_chosen and 'txt' not in document_type_chosen and 'xml' not in document_type_chosen:
         app.logger.error("The document type selected is not supported.")
         return render_template('500.html', error="One of the types selected is not supported.")
-    app.logger.info("Successfully retrieved the filename: "+ str(documents_chosen))
+    app.logger.info("Retrieved the files: "+ str(documents_chosen))
 
     hash_algos = [{"name":"SHA256", "oid":"2.16.840.1.101.3.4.2.1"}]
+    app.logger.info("Displaying the signature options page.")
     return render_template('select-options-page.html', list_docs=list(zip(documents_chosen, signature_format)), digest_algorithms=hash_algos)
 
 # Retrieve document with given name
@@ -87,7 +90,7 @@ def sca_signature_flow():
         form_global.append(form)
         update_session_values(variable_name="form_global", variable_value=form_global)
 
-    app.logger.info("Successfully saved the options chosen.")
+    app.logger.info("Successfully saved the signature options chosen.")
     return Response("Ok", 200)
 
 @rp.route("/document/sign", methods=['GET'])
@@ -113,24 +116,26 @@ def start_wallet_interaction(wallet_url, scheme):
     if list_forms is None:
         app.logger.error("The signature options information is missing.")
         render_template("500.html", error="The signature settings are missing.")
+    app.logger.info("Retrieved signature options forms.")
 
     documents_info = []
     documents_url = []
     hash_algorithm_oid = None
-
     for form in list_forms:
         filename = form.get("filename")
         hash_algorithm_oid = form.get("digest_algorithm")
         if filename is None:
             app.logger.error("The filename is missing.")
             render_template("500.html", error="One of the filenames is missing.")
-        app.logger.info(f"Document to sign: {filename}. Hash Algorithm: {hash_algorithm_oid}")
+        app.logger.info(f"Retrieve signature options for document: {filename} with hash algorithm: {hash_algorithm_oid}")
 
         document_content = get_document_content(filename)
         documents_info.append({"filename": filename, "document_content": document_content})
+        app.logger.info("Retrieved document content for file: "+filename)
 
         document_url = route_url+"/document/"+filename
         documents_url.append(document_url)
+        app.logger.info(f"Retrieved document url: {documents_url} for file: {filename}")
 
     link_to_wallet_tester, nonce = wallet_interaction.sd_retrieval_from_authorization_request(
         documents_info=documents_info,
@@ -139,7 +144,7 @@ def start_wallet_interaction(wallet_url, scheme):
         wallet_url=wallet_url,
         client_id_scheme = scheme
     )    
-    app.logger.info(f"Link to Wallet Tester: {link_to_wallet_tester} & Response URI: {nonce}")
+    app.logger.info(f"Retrieved link to Wallet: {link_to_wallet_tester} with nonce: {nonce}")
     
     retrieve_signed_document_url = route_url+"/document/signed?nonce="+nonce
     app.logger.info(f"URL where to retrieve signed document: {retrieve_signed_document_url}")
@@ -150,8 +155,10 @@ def start_wallet_interaction(wallet_url, scheme):
     qr_img.save(buffer, format='PNG')
     buffer.seek(0)
     qr_img_base64 = "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode("utf-8")
+    app.logger.info("Obtained QrCode Image.")
     return render_template('redirect-wallet-page.html', url=link_to_wallet_tester, qrcode=qr_img_base64, retrieve_signed_document_url=retrieve_signed_document_url)
 
+# Sign with Wallet Tester for development purposes
 @rp.route("/document/sign/tester", methods=['GET'])
 @login_required
 def sign_with_wallet_tester():
@@ -163,6 +170,7 @@ def sign_with_wallet_tester():
     wallet_url = Config.wallet_url
     return start_wallet_interaction(wallet_url, client_id_scheme)
 
+# Sign with Wallet with scheme "mdoc-openid4vp://"
 @rp.route("/document/sign/wallet", methods=['GET'])
 @login_required
 def sign_with_wallet():
@@ -174,7 +182,7 @@ def sign_with_wallet():
     wallet_url = "mdoc-openid4vp://" + Config.service_domain
     return start_wallet_interaction(wallet_url, client_id_scheme)
 
-
+# Display with Wallet with scheme "eudi-rqes://"
 @rp.route("/document/sign/wallet/reference-implementation", methods=['GET'])
 @login_required
 def sign_with_reference_implementation():
@@ -186,12 +194,12 @@ def sign_with_reference_implementation():
     wallet_url = "eudi-rqes://" + Config.service_domain
     return start_wallet_interaction(wallet_url, client_id_scheme)
 
-
+# Waiting for signed document from Wallet
 @rp.route("/document/signed", methods=['GET'])
 @login_required
 def wait_for_signed_document():
     nonce = request.args.get('nonce')
-    app.logger.info(f"Response URI where to retrieve signed document: {nonce}")
+    app.logger.info(f"Retrieve signed document associated to the nonce: {nonce}")
     timeout = time.time() + 60*10 # 10 minutes
     
     signed_document = None
@@ -203,19 +211,21 @@ def wait_for_signed_document():
             signed_document = response
             app.logger.info(f"Retrieved signed document.")
         else:
-            app.logger.info("Waiting for signed document...")
+            app.logger.info("Signed document not received yet. Waiting for signed document...")
             time.sleep(15)
     
     if not found:
+        app.logger.error("Relying Party Tester timed out while waiting for the signed document from the Wallet.")
         db.remove_request_object_with_request_id(nonce)
         remove_session_values("form_global")
         return Response("Relying Party Tester timed out while waiting for the signed document from the Wallet.", status=408)
     else:
+        app.logger.info("Successfully received signed document from Wallet.")
         form_list = session.get("form_global")
         data = []
         for form, doc in zip(form_list, signed_document):
             filename = form.get("filename")
-            app.logger.info(f"Found the filename to sign {filename} and expected signed document.")
+            app.logger.info(f"Found the filename to sign {filename} and the expected signed document.")
 
             new_name = add_suffix_to_filename(os.path.basename(filename))
             mime_type, _ = mimetypes.guess_type(filename)
@@ -226,6 +236,7 @@ def wait_for_signed_document():
             }
             data.append(info)
         remove_session_values("form_global")
+        app.logger.info("Returning signed documents.")
         return jsonify(data)
 
 def add_suffix_to_filename(filename, suffix="_signed"):

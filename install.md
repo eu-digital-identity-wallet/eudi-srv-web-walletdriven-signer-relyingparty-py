@@ -73,21 +73,26 @@ pip install -r app/requirements.txt
 
 ### Step 6: Configure the Application
 
-Copy \_config.py to config.py and modify the following configuration variables:
+Copy \_config.py to config.py in the app_config directory and modify the following configuration variables:
 
 - **secret_key**: Define a secure and random key
+
 - **jwt_private_key_path**: Path to the private key file used for signing JWTs. 
 - **jwt_private_key_passphrase**: Passphrase for the private key (if applicable).
 - **jwt_certificate_path**: Path to the JWT certificate file.
 - **jwt_ca_certificate_path**: Path to the CA certificate file.
 - **jwt_algorithm**: Algorithm used to generate JWTs.
-- **service_url**: Base URL of the service.
+
 - **service_domain**: Define the service domain.
 - **wallet_url**: URL of the wallet app endpoint for signature requests.
 - **pre_registered_client_id**: Pre-registered client ID for signature requests to the wallet.
+
 - **db_name**: Name of the database.
 - **db_user**: Database username.
 - **db_password**: Database user password.
+
+The \_config.py template supports loading configuration values from environment variables using the os.getenv() function. 
+This is especially useful when deploying the app using docker-compose, where environment variables can be defined in the docker-compose.yml or a .env file.
 
 ### Step 7: Set up the Database:
 
@@ -114,7 +119,7 @@ Copy \_config.py to config.py and modify the following configuration variables:
 
 4. **Update config.py**
 
-    Add the following parameters to the 'config.py':
+    Add the following parameters to the 'config.py' in the 'app_config' directory:
     
     ```
     db_host = 'localhost'
@@ -123,6 +128,18 @@ Copy \_config.py to config.py and modify the following configuration variables:
     db_user = {db_user}
     db_password = {db_password}
     ```
+
+   * **Docker Deployment Notes**
+   When using Docker Compose, you should define the database credentials as environment variables instead of hardcoding them. 
+   Here's an example snippet from a 'docker-compose.yml' file:
+   ```
+   environment:
+      DB_NAME: {db_name}
+      DB_USER: {db_user}
+      DB_PASSWORD: {db_password}
+   ```
+   In Docker environments, set db_host in the config.py to "host.docker.internal" to allow the container to access services running on the host machine.
+   Otherwise, use "localhost" for local (non-containerized) development.
 
 ### Step 8: Create a Key Pair and a Certificate
 
@@ -162,6 +179,20 @@ Once issued, update **config.py** with the appropriate paths:
 - **jwt_certificate_path**: Path to the issued certificate file.
 - **jwt_ca_certificate_path**: Path to the CA certificate file.
 - **jwt_algorithm**: Algorithm used to generate JWTs.
+
+* **Docker Deployment Notes**
+
+When deploying with Docker, define the necessary environment variables in your 'docker-compose.yml':
+```
+environment:
+   JWT_PRIVATE_KEY_PATH: "/app/certificates/..."
+   JWT_PRIVATE_KEY_PASSWORD: "private key password"
+   JWT_CERTIFICATE_PATH: "/app/certificates/..."
+   JWT_CA_CERTIFICATE_PATH: "/app/certificates/..."
+volumes:
+   - certificates/:/app/certificates/
+```
+This setup maps your local 'certificates/' folder into the container and provides the containerized application access to your JWT keys and certificates.
 
 ### Step 9: Create a Logs Folder
 

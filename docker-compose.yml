@@ -1,0 +1,21 @@
+services:
+  walletdriven_relyingparty:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: walletdriven_relyingparty
+    ports:
+      - "5001:5001"
+    environment:
+      FLASK_RUN_PORT: 5001
+      SECRET_KEY:
+      SERVICE_DOMAIN:
+      DB_NAME:
+      DB_USER:
+      DB_PASSWORD:
+      JWT_PRIVATE_KEY_PATH:
+      JWT_PRIVATE_KEY_PASSWORD:
+      JWT_CERTIFICATE_PATH:
+      JWT_CA_CERTIFICATE_PATH:
+    volumes:
+      - certificates/:/app/certificates/

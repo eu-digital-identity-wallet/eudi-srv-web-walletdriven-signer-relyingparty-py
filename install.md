@@ -194,14 +194,15 @@ volumes:
 ```
 This setup maps your local 'certificates/' folder into the container and provides the containerized application access to your JWT keys and certificates.
 
-### Step 9: Create a Logs Folder
+### Step 9: Run the Application
 
-Create a **logs** folder inside **eudi-srv-web-walletdriven-signer-relyingparty-py**.
-
-### Step 10: Run the Application
-
-Run the EUDI Wallet-Driven Relying Party application (on <http://127.0.0.1:5000>)
+Run the EUDI Wallet-Driven Relying Party application (on <http://127.0.0.1:5001>)
 
 ```shell
 flask --app app run
+```
+
+Optionally, to start the 'EUDI Wallet-Driven Relying Party' application as a Docker Container, run the command:
+```shell
+docker compose up --build
 ```

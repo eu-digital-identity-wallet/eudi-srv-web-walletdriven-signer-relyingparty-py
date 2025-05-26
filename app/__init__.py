@@ -32,6 +32,8 @@ from app.model import keys as keys_service
 
 sys.path.append(os.path.dirname(__file__))
 
+os.makedirs("logs", exist_ok=True)
+
 dictConfig(
     {
         "version": 1,

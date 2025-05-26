@@ -20,8 +20,6 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
-      # - name: Build Docker Image
-      #   run: docker build -t simple-flask-app_compose-flask-app:latest .
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3.10.0

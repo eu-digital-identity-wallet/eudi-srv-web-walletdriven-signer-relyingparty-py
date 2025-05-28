@@ -32,12 +32,16 @@ from app.model import keys as keys_service
 
 sys.path.append(os.path.dirname(__file__))
 
+os.makedirs("logs", exist_ok=True)
+
+ENV = os.getenv("ENV_TYPE", "test")
+
 dictConfig(
     {
         "version": 1,
         "formatters": {
             "default": {
-                "format": "[%(asctime)s] %(levelname)s | %(module)s (%(funcName)s): %(message)s",
+                "format": "%(asctime)s %(levelname)s %(module)s.%(funcName)s:%(lineno)d %(name)s: - %(message)s",
                 "datefmt": "%Y-%m-%d %H:%M:%S",
             }
         },
@@ -49,14 +53,17 @@ dictConfig(
             },
             "file": {
                 "class": "logging.handlers.TimedRotatingFileHandler",
-                "filename": "logs/flask.log",
+                "filename": "logs/walletdriven_rp_logs.log",
                 "when": "D",
                 "interval": 7, # a new file for every week
                 "backupCount": 5, # the number of files that will be retained on the disk
                 "formatter": "default",
             },
         },
-        "root": {"level": "INFO", "handlers": ["console", "file"]},
+        "root": {
+            "level": "DEBUG" if ENV != "dev" else "INFO",
+            "handlers": ["console"] if ENV != "dev" else ["file"],
+        },
     }
 )
 

@@ -19,23 +19,26 @@
 This config.py contains configuration data.
 """
 
-class ConfigClass:
-    secret_key = "secret_here"
+import os
 
-    jwt_private_key_path = "jwt private key path here"
-    jwt_private_key_passphrase = "jwt private key passphrase here"
-    jwt_certificate_path = "jwt certificate path here"
-    jwt_ca_certificate_path = "jwt CA certificate path here"
+class ConfigClass:
+    secret_key = os.getenv("SECRET_KEY") or "secret_here"
+
+    jwt_private_key_path = os.getenv("JWT_PRIVATE_KEY_PATH") or "jwt private key path here"
+    jwt_private_key_passphrase = os.getenv("JWT_PRIVATE_KEY_PASSWORD") or "jwt private key passphrase here"
+    jwt_certificate_path = os.getenv("JWT_CERTIFICATE_PATH") or "jwt certificate path here"
+    jwt_ca_certificate_path = os.getenv("JWT_CA_CERTIFICATE_PATH") or "jwt CA certificate path here"
     jwt_algorithm = "jwt algorithm here"
     
-    service_url = "rp_web_page_here"
-    service_domain = "rp_domain_here"
-    wallet_url = "wallet_endpoint_url_here"
+    service_domain = os.getenv("SERVICE_DOMAIN") or "rp domain here"
+    service_url = "http://" + service_domain + "/tester/rp"
+    wallet_tester_url = "wallet tester endpoint url here"
+    pre_registered_client_id = "pre registered client id here"
+
+    LOAD_FOLDER = 'docs'
     
-    LOAD_FOLDER = 'app/docs' 
-    
-    db_host = 'localhost'
+    db_host = 'host.docker.internal' or 'localhost'
     db_port = 3306
-    db_name = "db_name_here"
-    db_user = "db_user_name_here"
-    db_password = "db_password_here"
+    db_name = os.getenv("DB_NAME") or "db name here"
+    db_user = os.getenv("DB_USER") or "db user name here"
+    db_password = os.getenv("DB_PASSWORD") or  "db password here"

@@ -18,4 +18,4 @@ services:
       JWT_CERTIFICATE_PATH:
       JWT_CA_CERTIFICATE_PATH:
     volumes:
-      - certificates/:/app/certificates/
+      - ./certificates/:/app/certificates/

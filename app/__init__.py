@@ -33,9 +33,7 @@ from app.model import keys as keys_service
 sys.path.append(os.path.dirname(__file__))
 
 os.makedirs("logs", exist_ok=True)
-
 ENV = os.getenv("ENV_TYPE", "test")
-
 dictConfig(
     {
         "version": 1,
@@ -134,11 +132,9 @@ def create_app():
     app.config['SESSION_KEY_PREFIX'] = 'wallet-driven-session:'
     app.config['SESSION_COOKIE_NAME'] = "rp-portal-session"
     app.config['SESSION_COOKIE_PATH'] = '/rp'
-    
     app.config.update(SESSION_COOKIE_SAMESITE="None", SESSION_COOKIE_SECURE=True)
     Session(app)
 
     # Configure CORS
     CORS(app, supports_credentials=True)
-
     return app

@@ -11,3 +11,4 @@ werkzeug==2.3.7
 PyJWT==2.3.0
 pymysql==1.1.1
 qrcode[pil]==8.0
+python-dotenv==1.1.1

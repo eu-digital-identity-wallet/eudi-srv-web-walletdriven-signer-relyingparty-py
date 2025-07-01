@@ -19,23 +19,27 @@
 This config.py contains configuration data.
 """
 
-class ConfigClass:
-    secret_key = "secret_here"
+import os
 
-    jwt_private_key_path = "jwt private key path here"
-    jwt_private_key_passphrase = "jwt private key passphrase here"
-    jwt_certificate_path = "jwt certificate path here"
-    jwt_ca_certificate_path = "jwt CA certificate path here"
-    jwt_algorithm = "jwt algorithm here"
+class ConfigClass:
+    secret_key = os.getenv("SECRET_KEY")
+
+    jwt_private_key_path = os.getenv("JWT_PRIVATE_KEY_PATH")
+    jwt_private_key_password = os.getenv("JWT_PRIVATE_KEY_PASSWORD")
+    jwt_certificate_path = os.getenv("JWT_CERTIFICATE_PATH")
+    jwt_ca_certificate_path = os.getenv("JWT_CA_CERTIFICATE_PATH")
+    jwt_algorithm = "ES256"
+
+    service_domain =  os.getenv("SERVICE_DOMAIN")
+    service_url = os.getenv("SERVICE_URL")
+    wallet_url = os.getenv("WALLET_URL")
+    pre_registered_client_id = os.getenv("SERVICE_DOMAIN")
+
+    LOAD_FOLDER = 'docs'
     
-    service_url = "rp_web_page_here"
-    service_domain = "rp_domain_here"
-    wallet_url = "wallet_endpoint_url_here"
-    
-    LOAD_FOLDER = 'app/docs' 
-    
-    db_host = 'localhost'
-    db_port = 3306
-    db_name = "db_name_here"
-    db_user = "db_user_name_here"
-    db_password = "db_password_here"
+    db_host = os.getenv("DB_HOST")
+    db_port = int(os.getenv("DB_PORT"))
+    db_name = os.getenv("DB_NAME")
+    db_user = os.getenv("DB_USER")
+    db_password = os.getenv("DB_PASSWORD")
+

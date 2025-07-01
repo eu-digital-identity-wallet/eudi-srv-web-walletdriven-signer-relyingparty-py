@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ###############################################################################
+import base64
 
 import jwt, secrets, hashlib
 from model.wallet import db
@@ -22,6 +23,7 @@ from flask import (
     current_app as app
 )
 from model import keys as keys_service
+from urllib.parse import quote
 
 jwt_algorithm = Config.jwt_algorithm
 
@@ -67,9 +69,10 @@ def sd_retrieval_from_authorization_request(documents_info, documents_url, hash_
         raise Exception("It was impossible to complete the request, as there was an error accessing the database.")
 
     request_uri = Config.service_url + "/wallet/sd/" + nonce
+    request_uri_url_encoded = quote(request_uri, safe="")
     app.logger.info("Generated the Request Uri Value.")
     
-    link_to_wallet = wallet_url+"?request_uri="+request_uri+"&client_id="+client_id
+    link_to_wallet = wallet_url+"?request_uri="+request_uri_url_encoded+"&client_id="+client_id
     app.logger.info("Generated the link to wallet: "+link_to_wallet)
 
     return link_to_wallet, nonce
@@ -92,15 +95,13 @@ def get_document_digest(documents_info, hash_algorithm_oid):
     documents_digests = []
     for doc_info in documents_info:
         filename = doc_info["filename"]
-        document_base64 = doc_info["document_base64"]
-        if isinstance(document_base64, str):
-            document_base64 = document_base64.encode('utf-8')
-
+        document_content = doc_info["document_content"]
         hash_func = hashlib.new(hash_name)
-        hash_func.update(document_base64)
+        hash_func.update(document_content)
+        hash_base64_encoded = base64.b64encode(hash_func.digest()).decode("utf-8")
 
         documents_digests.append({
-            "hash": hash_func.hexdigest(),
+            "hash": hash_base64_encoded,
             "label": filename
         })
         app.logger.info("Calculated Document Digest of the file: " + filename)

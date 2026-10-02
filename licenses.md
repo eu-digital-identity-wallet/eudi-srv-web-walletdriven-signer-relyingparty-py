@@ -69,17 +69,22 @@ _2025-01-13 12:11:20 CET_
 > - **Project URL**: [https://github.com/lincolnloop/python-qrcode](https://github.com/lincolnloop/python-qrcode)
 > - **License**: BSD License - [https://github.com/lincolnloop/python-qrcode/blob/main/LICENSE](https://github.com/lincolnloop/python-qrcode/blob/main/LICENSE)
 
-**14** **Name:** `Bootstrap`
+**14** **Name:** `python-dotenv` **Version:** `1.1.1`
+
+> - **Project URL**: [https://github.com/theskumar/python-dotenv](https://github.com/theskumar/python-dotenv)
+> - **License**: BSD 3-Clause License - [https://github.com/theskumar/python-dotenv/blob/main/LICENSE](https://github.com/theskumar/python-dotenv/blob/main/LICENSE)
+
+**15** **Name:** `pydantic` **Version:** `2.0`
+
+> - **Project URL**: [https://github.com/pydantic/pydantic](https://github.com/pydantic/pydantic)
+> - **License**: MIT License - [https://github.com/pydantic/pydantic/blob/main/LICENSE](https://github.com/pydantic/pydantic/blob/main/LICENSE)
+
+**16** **Name:** `Bootstrap`
 
 > - **Project URL**: [https://getbootstrap.com/](https://getbootstrap.com/)
 > - **License**: MIT License - [https://github.com/twbs/bootstrap/blob/v5.3.3/LICENSE](https://github.com/twbs/bootstrap/blob/v5.3.3/LICENSE)
 
-**15** **Name:** `Poppins`
-
-> - **Project URL**: [https://fonts.google.com/specimen/Poppins](https://fonts.google.com/specimen/Poppins)
-> - **License**: MIT License - [https://fonts.google.com/specimen/Poppins/license](https://fonts.google.com/specimen/Poppins/license)
-
-**16** **Name:** `Font Awesome` **Version:** `6.0.0`
+**17** **Name:** `Font Awesome` **Version:** `6.0.0`
 
 > - **Project URL**: [https://fontawesome.com/](https://fontawesome.com/)
 > - **License**: CC BY 4.0 License, SIL OFL 1.1 License, MIT License - [https://github.com/FortAwesome/Font-Awesome/blob/6.x/LICENSE.txt](https://github.com/FortAwesome/Font-Awesome/blob/6.x/LICENSE.txt)

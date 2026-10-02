@@ -28,7 +28,7 @@ def get_document_for_signature():
     ]
 
     link_to_wallet, qr_img_base64, nonce = create_document_signing_request(
-        protocol_version="previous",
+        protocol_version="etsi119432",
         request_object_delivery="request_uri",
         wallet_url=wallet_url,
         documents=documents_info)

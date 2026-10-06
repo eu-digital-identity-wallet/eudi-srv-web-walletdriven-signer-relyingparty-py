@@ -21,9 +21,25 @@
 
     ```
     use {db_name};
-    create table sd (request_id varchar(255), request_object text);
-    create table sdo (id int NOT NULL AUTO_INCREMENT, request_id varchar(255), signed_data_object mediumtext, error varchar(255), PRIMARY KEY (id));
-    ```
+
+    create table if not exists sd (
+	   request_id varchar(255) not null,
+	   request_object text not null,
+	   created_at timestamp not null default (UTC_TIMESTAMP()),
+	   primary key (request_id),
+	   INDEX idx_created_at (created_at)
+    ) ENGINE=InnoDB default CHARSET=utf8mb4;
+   
+    create table if not exists sdo (
+	   id int not null AUTO_INCREMENT,
+	   request_id varchar(255) not null,
+	   signed_data_object mediumtext,
+	   error varchar(255),
+	   created_at timestamp not null default (UTC_TIMESTAMP()),
+	   primary key (id),
+	   INDEX idx_request_id (request_id)
+    ) ENGINE=InnoDB default CHARSET=utf8mb4; 
+   ```
 
 4. **Alternative: Run MySQL Database Script**
     
@@ -37,7 +53,7 @@
     Store the values used above (e.g., database name, user, and password) for use during the main project setup.  
     You can update them in either:
     
-    - the `config.py` file under the `app_config` directory, or  
+    - the `config.py` file under the `app/core` directory, or  
     - the `.env` file.
 
 ### Register Relying Party and Retrieve Key Pair and Certificate
@@ -140,7 +156,7 @@ pip install -r app/requirements.txt
 
 #### Step 6: Configure the Application
 
-Update the **config.py** file located in the app_config directory or, alternatively, create an **.env** file. In either case, configure the following variables:
+Update the **config.py** file located in the app/core directory or, alternatively, create an **.env** file. In either case, configure the following variables:
 
 - **secret_key**: A secure, random secret key used for session management and signing.
 - **jwt_private_key_path**: Path to the private key file used for signing JWTs. (See: [Register Relying Party and Retrieve Key Pair and Certificate](#register-relying-party-and-retrieve-key-pair-and-certificate))
@@ -199,22 +215,28 @@ Note: Don't forget to follow the [Prerequisites](#Prerequisites).
 
 ### Configure .env File
 
-Create a *.env* file in the project root with the following structure:
+Create a *.env* file in the project root with same structure of `.env.sample`:
 ```shell
-FLASK_RUN_PORT= # Port for the Flask server 
-SECRET_KEY= # A secure and random key
-JWT_PRIVATE_KEY_PATH= # Path inside container
-JWT_PRIVATE_KEY_PASSWORD= 
-JWT_CERTIFICATE_PATH= # Path inside container
-JWT_CA_CERTIFICATE_PATH= # Path inside container
-SERVICE_DOMAIN= 127.0.0.1:5001
-SERVICE_URL=http://127.0.0.1:5001/rp
-WALLET_URL= # URL for a Wallet Tester
-DB_HOST=host.docker.internal  # Use 'host.docker.internal' to access host from container
-DB_PORT=3306
-DB_NAME={db_name}
-DB_USER={db_user}
-DB_PASSWORD={db_password}
+FLASK_RUN_PORT=5001
+SECRET_KEY=
+ACCESS_CERTIFICATE_KEY_SOURCE=
+ACCESS_CERTIFICATE_PRIVATE_KEY_PATH=
+ACCESS_CERTIFICATE_PATH=
+ACCESS_CERTIFICATE_CA_PATH=
+# ACCESS_CERTIFICATE_PRIVATE_KEY_PASSWORD=
+SERVICE_SCHEME=
+SERVICE_DOMAIN=
+SERVICE_BASE_ENDPOINT=
+WALLET_TESTER_URL=
+SAMPLE_DOCUMENTS_FOLDER=sample_docs
+LOGS_FOLDER=logs
+DB_HOST=
+DB_PORT=
+DB_NAME=
+DB_USER=
+DB_PASSWORD=
+DB_ROOT_PASSWORD=
+DB_ENTRY_MAX_AGE_SECONDS=
 ```
 
 See the section [Step 6: Configure the Application](#step-6-configure-the-application) for more details about the configuration parameters.

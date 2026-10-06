@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0]
+
+_2 Oct 2026_
+
+### Added:
+
+- Added support for ITB tests, including endpoints for QR code generation, logs retrieval, and signed document upload.
+
+### Changed:
+
+- Updated document retrieval to align with ETSI TS 119 432 v1.3.1.
+- Refactoring code, including cleanup and bug fixes.
+
 ## [0.2.0]
 
 _28 May 2025_

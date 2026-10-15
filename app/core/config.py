@@ -64,7 +64,7 @@ class Settings:
     SERVICE_SCHEME: str = os.getenv("SERVICE_SCHEME", "http")
 
     WALLET_TESTER_URL: str = os.getenv("WALLET_TESTER_URL")
-    CLIENT_ID_PREFIX: str = "x509_hash"
+    CLIENT_ID_PREFIX: str = "x509_san_dns"  # or "x509_hash"
 
 settings = Settings()
 

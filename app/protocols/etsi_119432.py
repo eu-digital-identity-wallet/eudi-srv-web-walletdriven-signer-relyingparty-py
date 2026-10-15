@@ -25,7 +25,7 @@ class Etsi119432RequestBuilder:
             "client_id": client_id,
             "iss": client_id,
             "aud": "https://self-issued.me/v2",
-            "redirect_uri": url_for('documents.view_signed_document', state=session.sid, _external=True, _scheme=settings.SERVICE_SCHEME),
+            # "redirect_uri": url_for('documents.view_signed_document', state=session.sid, _external=True, _scheme=settings.SERVICE_SCHEME),
             "state": session.sid,
             "nonce": self.nonce,
             **({"verifier_info": [self._get_verifier_info()]} if settings.REGISTRATION_CERTIFICATE else {}),

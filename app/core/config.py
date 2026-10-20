@@ -28,7 +28,8 @@ class Settings:
 
     SECRET_KEY: str = os.getenv("SECRET_KEY")
     SESSION_TYPE: str = "filesystem"
-    SESSION_FILE_THRESHOLD: int = 50
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=1)
+    SESSION_FILE_THRESHOLD: int = 100
     SESSION_PERMANENT: bool = False
     SESSION_USE_SIGNER: bool = True
     SESSION_KEY_PREFIX: str = "wallet-driven-session:"

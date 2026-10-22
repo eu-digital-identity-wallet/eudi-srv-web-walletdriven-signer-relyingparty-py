@@ -99,7 +99,7 @@ def select_wallet_options():
 def sign_with_wallet_tester():
     wallet_url = settings.WALLET_TESTER_URL
     link_to_wallet, qr_img_base64, nonce = create_document_signing_request(
-        protocol_version="etsi119432",
+        protocol_version="previous",
         request_object_delivery="request_uri",
         wallet_url=wallet_url,
         documents=get_session_value(SessionState.DOCUMENTS_OPTIONS_TO_SIGN)
